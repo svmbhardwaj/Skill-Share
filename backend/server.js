@@ -1,11 +1,19 @@
 // backend/server.js
 
-// ... (existing code: require('dotenv').config(), express, etc.)
+// 🚨 CRITICAL: Ensure dotenv.config() is the ABSOLUTE FIRST THING called
+// This loads your environment variables (like JWT_SECRET) BEFORE any other modules
+// that might need them are required.
+require('dotenv').config();
 
-// Connect to MongoDB
-connectDB();
+const express = require('express');
+const cors = require('cors');
+// FIX: Ensure connectDB is imported here, along with other modules
+const connectDB = require('./config/db'); 
 
 const app = express();
+
+// FIX: Connect to MongoDB here, after connectDB is defined
+connectDB(); 
 
 // Stripe webhook endpoint needs raw body, so place it before express.json()
 app.use('/api/payment/webhook', express.raw({ type: 'application/json' }));
@@ -16,7 +24,7 @@ app.use(express.json());
 // 🚨 CRITICAL FIX: Configure CORS to allow your Vercel frontend URL
 const allowedOrigins = [
     'http://localhost:3000', // For local frontend development
-    'https://skill-share-774ulevar-shivam-bhardwajs-projects-d1c28ead.vercel.app', // <--- YOUR DEPLOYED VERCEl FRONTEND URL ADDED HERE
+    'https://skill-share-774ulevar-shivam-bhardwajs-projects-d1c28ead.vercel.app', // YOUR DEPLOYED VERCEl FRONTEND URL ADDED HERE
     // Add other frontend domains if you have them (e.g., specific preview branch URLs)
 ];
 
@@ -37,7 +45,6 @@ app.use(cors({
 
 
 // --- Mount Routers ---
-// ... (rest of your existing routes) ...
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/services', require('./routes/serviceRoutes'));
 app.use('/api/jobs', require('./routes/jobRoutes'));
