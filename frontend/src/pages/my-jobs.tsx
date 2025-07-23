@@ -6,7 +6,7 @@ import Head from 'next/head';
 // NEW: Import jsonwebtoken for decoding
 import * as jsonwebtoken from 'jsonwebtoken';
 
-import CheckoutForm from '../components/CheckoutForm';
+import CheckoutForm from '../components/CheckoutForm.tsx'; // <--- ADDED .tsx HERE
 import styles from '../styles/MyJobs.module.css';
 
 // TypeScript types
