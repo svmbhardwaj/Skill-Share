@@ -1,0 +1,112 @@
+.main {
+    padding: 2rem;
+    min-height: 100vh;
+    background-color: #121212;
+    color: #eee;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.heading {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.jobCard {
+    background-color: #1e1e1e;
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 1.5rem 2rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    transition: transform 0.2s;
+}
+
+.jobCard:hover {
+    transform: translateY(-5px);
+}
+
+.title {
+    font-size: 1.75rem;
+    font-weight: 600;
+    margin: 0 0 1rem 0;
+}
+
+.details p {
+    margin: 0.5rem 0;
+    color: #b0b0b0;
+    font-size: 1.1rem;
+}
+
+.details strong {
+    color: #fff;
+}
+
+.status {
+    display: inline-block;
+    padding: 0.3rem 0.8rem;
+    border-radius: 15px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    text-transform: capitalize;
+}
+
+.requested {
+    background-color: #d97706; /* Amber */
+    color: #fff;
+}
+
+.accepted {
+    background-color: #059669; /* Emerald */
+    color: #fff;
+}
+
+.paid {
+    background-color: #2563eb; /* Blue */
+    color: #fff;
+}
+
+.cancelled {
+    background-color: #dc2626; /* Red */
+    color: #fff;
+}
+
+.actions {
+    margin-top: 1rem;
+    display: flex;
+    gap: 1rem;
+}
+
+.actions button {
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.actions button:hover {
+    opacity: 0.8;
+}
+
+.acceptBtn {
+    background-color: #059669;
+    color: #fff;
+}
+
+.declineBtn {
+    background-color: #9ca3af;
+    color: #1e1e1e;
+}
+
+.payBtn {
+    background-color: #3b82f6;
+    color: #fff;
+}
