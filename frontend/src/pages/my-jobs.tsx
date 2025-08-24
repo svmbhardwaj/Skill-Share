@@ -3,9 +3,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import * as jsonwebtoken from 'jsonwebtoken';
-
-// Temporarily commented out to bypass persistent Vercel build error
-// import CheckoutForm from '../components/CheckoutForm.tsx'; // Original line was without .tsx
 import styles from '../styles/MyJobs.module.css';
 
 // TypeScript types
@@ -42,11 +39,13 @@ export default function MyJobs() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [currentUserId, setCurrentUserId] = useState<string>('');
-    const [clientSecret, setClientSecret] = useState<string>(''); // Keep this state for now, but it won't trigger render
+    const [clientSecret, setClientSecret] = useState<string>('');
+
+    // ✅ fallback to localhost if NEXT_PUBLIC_BACKEND_API_URL isn’t set
+    const API_URL = process.env.NEXT_PUBLIC_BACKEND_API_URL || "http://localhost:5000";
 
     useEffect(() => {
         const token = localStorage.getItem('token');
-
         if (!token) {
             router.push('/login');
             return;
@@ -54,29 +53,42 @@ export default function MyJobs() {
 
         try {
             const decodedPayload: string | object | null = jsonwebtoken.decode(token);
-
             if (typeof decodedPayload === 'object' && decodedPayload !== null && 'id' in decodedPayload) {
-                const decodedToken: DecodedToken = decodedPayload as DecodedToken;
-                setCurrentUserId(decodedToken.id);
+                setCurrentUserId((decodedPayload as DecodedToken).id);
             } else {
                 throw new Error('Invalid token payload structure.');
             }
-        } catch (e: unknown) { // Corrected catch type
-            console.error('Error decoding token:', e);
-            router.push('/login');
+        } catch (err: unknown) {
+            if (err instanceof Error) {
+                console.error('Error decoding token:', err);
+                router.push('/login');
+            } else {
+                console.error('Error decoding token:', err);
+                router.push('/login');
+            }
             return;
         }
 
         const fetchJobs = async () => {
             setLoading(true);
             try {
-                const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/jobs/myjobs`, {
-                    headers: { 'Authorization': `Bearer ${token}` },
+                console.log("🔍 Fetching jobs from:", `${API_URL}/api/jobs/myjobs`);
+
+                const res = await fetch(`${API_URL}/api/jobs/myjobs`, {
+                    headers: { Authorization: `Bearer ${token}` },
                 });
 
                 if (!res.ok) {
-                    const errorData = await res.json();
-                    throw new Error(errorData.error || 'Failed to fetch jobs.');
+                    let errorMessage = `Failed to fetch jobs (status ${res.status})`;
+                    try {
+                        const errorData = await res.json();
+                        errorMessage = errorData.error || errorMessage;
+                    } catch {
+                        // response wasn’t JSON (likely HTML error page)
+                        const text = await res.text();
+                        console.error("Server returned non-JSON response:", text.slice(0, 200));
+                    }
+                    throw new Error(errorMessage);
                 }
 
                 const data = await res.json();
@@ -85,10 +97,12 @@ export default function MyJobs() {
                 } else {
                     setError(data.error || 'Failed to fetch jobs.');
                 }
-            } catch (err: unknown) { // Corrected catch type
+            } catch (err: unknown) {
                 if (err instanceof Error) {
+                    console.error("❌ Error fetching jobs:", err);
                     setError(err.message);
                 } else {
+                    console.error("❌ Error fetching jobs:", err);
                     setError('An unknown error occurred while fetching jobs.');
                 }
             } finally {
@@ -97,7 +111,7 @@ export default function MyJobs() {
         };
 
         fetchJobs();
-    }, [router]);
+    }, [router, API_URL]);
 
     const handleStatusUpdate = async (jobId: string, newStatus: Job['status']) => {
         const token = localStorage.getItem('token');
@@ -108,9 +122,9 @@ export default function MyJobs() {
         }
 
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/jobs/${jobId}/status`, {
+            const res = await fetch(`${API_URL}/api/jobs/${jobId}/status`, {
                 method: 'PATCH',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                 body: JSON.stringify({ status: newStatus }),
             });
             const data = await res.json();
@@ -120,12 +134,13 @@ export default function MyJobs() {
             } else {
                 alert(`Error updating job status: ${data.error || 'Unknown error.'}`);
             }
-        } catch (err: unknown) { // Corrected catch type
-            console.error('Failed to update job status:', err);
+        } catch (err: unknown) {
             if (err instanceof Error) {
-                alert(`Failed to update job status: ${err.message || 'Network error.'}`);
+                console.error('❌ Failed to update job status:', err);
+                alert(`Failed to update job status: ${err.message}`);
             } else {
-                alert('Failed to update job status. Please try again.');
+                console.error('❌ Failed to update job status:', err);
+                alert('Failed to update job status: Network error.');
             }
         }
     };
@@ -138,13 +153,10 @@ export default function MyJobs() {
             return;
         }
 
-        // This function will still attempt to set clientSecret,
-        // but the CheckoutForm itself is no longer rendered.
-        // Payment functionality will effectively be disabled for now.
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/payment/create-payment-intent`, {
+            const res = await fetch(`${API_URL}/api/payment/create-payment-intent`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                 body: JSON.stringify({ jobId }),
             });
             const data = await res.json();
@@ -153,12 +165,13 @@ export default function MyJobs() {
             } else {
                 alert('Error: Could not initiate payment. ' + (data.error || ''));
             }
-        } catch (err: unknown) { // Corrected catch type
-            console.error('Failed to connect to the payment server:', err);
+        } catch (err: unknown) {
             if (err instanceof Error) {
-                alert(`Failed to connect to the payment server: ${err.message || 'Network error.'}`);
+                console.error('❌ Failed to connect to the payment server:', err);
+                alert(`Failed to connect to the payment server: ${err.message}`);
             } else {
-                alert('Failed to connect to the payment server. Please try again.');
+                console.error('❌ Failed to connect to the payment server:', err);
+                alert('Failed to connect to the payment server: Network error.');
             }
         }
     };
@@ -212,18 +225,15 @@ export default function MyJobs() {
                                     <p><strong>Provider:</strong> {job.provider.name}</p>
                                 </div>
                                 <div className={styles.actions}>
-                                    {/* Action for the Provider to Accept/Decline a requested job */}
                                     {job.status === 'requested' && currentUserId === job.provider._id && (
                                         <>
                                             <button onClick={() => handleStatusUpdate(job._id, 'accepted')} className={styles.acceptBtn}>Accept</button>
                                             <button onClick={() => handleStatusUpdate(job._id, 'cancelled')} className={styles.declineBtn}>Decline</button>
                                         </>
                                     )}
-                                    {/* Action for the Client to Pay for an accepted job */}
                                     {job.status === 'accepted' && currentUserId === job.client._id && (
                                         <button onClick={() => handlePayNow(job._id)} className={styles.payBtn}>Pay Now</button>
                                     )}
-                                    {/* Action for both Client/Provider to Cancel if not paid/completed */}
                                     {(job.status === 'requested' || job.status === 'accepted') && (currentUserId === job.client._id || currentUserId === job.provider._id) && (
                                         <button onClick={() => handleStatusUpdate(job._id, 'cancelled')} className={styles.cancelActionBtn}>Cancel Job</button>
                                     )}
@@ -231,14 +241,6 @@ export default function MyJobs() {
                             </div>
                         ))
                     )}
-
-                    {/* Temporarily commented out to bypass persistent Vercel build error */}
-                    {/* {clientSecret && (
-                        <div className={`${styles.jobCard} ${styles.paymentSection}`}>
-                            <h2 className={styles.title}>Complete Your Payment</h2>
-                            <CheckoutForm clientSecret={clientSecret} />
-                        </div>
-                    )} */}
                 </div>
             </main>
         </>
