@@ -105,29 +105,3 @@ You'll need two separate terminals.
     *Running at `http://localhost:3000`*
 
 -----
-
-## ⚙️ Environment Variables
-
-**Never commit your `.env` files to Git\!**
-
-#### Backend (`skillshare-backend/.env`)
-
-```env
-PORT=5000
-MONGO_URI=your_mongodb_connection_string
-JWT_SECRET=your_super_secret_jwt_key
-STRIPE_SECRET_KEY=sk_test_...
-STRIPE_WEBHOOK_SECRET=whsec_...
-```
-
-team mwmbera
-shivam 
-yashika chaudhary
-shikha sharma
-deepak kumar
-
-#### Frontend (`skillshare-frontend/.env.local`)
-
-```env
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
-```
