@@ -1,11 +1,7 @@
 // backend/server.js
 
-// 🚨 CRITICAL FIX: Ensure dotenv.config() is the ABSOLUTE FIRST THING called
-// This loads your environment variables (like JWT_SECRET) BEFORE any other modules
-// that might need them are required.
+// Load environment variables first
 require('dotenv').config();
-console.log('Backend JWT_SECRET (from .env):', process.env.JWT_SECRET); // TEMPORARY DEBUG LINE
-// ... rest of your server.js
 
 const express = require('express');
 const cors = require('cors');
@@ -16,15 +12,37 @@ connectDB();
 
 const app = express();
 
+// Trust proxy for deployment platforms (Heroku, Render, Railway, etc.)
+app.set('trust proxy', 1);
+
 // Stripe webhook endpoint needs raw body, so place it before express.json()
 // (This is correctly placed, as raw body is needed before JSON parsing for webhooks)
 app.use('/api/payment/webhook', express.raw({ type: 'application/json' }));
 
 // Middleware to parse JSON bodies
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Enable Cross-Origin Resource Sharing (CORS)
-app.use(cors());
+// Enable Cross-Origin Resource Sharing (CORS) with production configuration
+const allowedOrigins = process.env.ALLOWED_ORIGINS 
+    ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
+    : ['http://localhost:3000'];
+
+app.use(cors({
+    origin: function (origin, callback) {
+        // Allow requests with no origin (mobile apps, curl, etc.)
+        if (!origin) return callback(null, true);
+        
+        if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 // --- Mount Routers ---
 // These routes will now have access to process.env.JWT_SECRET
@@ -32,13 +50,45 @@ app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/services', require('./routes/serviceRoutes'));
 app.use('/api/jobs', require('./routes/jobRoutes'));
 app.use('/api/payment', require('./routes/paymentRoutes'));
-app.use('/api/gigs', require('./routes/gigRoutes')); // <--- THIS IS THE LINE THAT WAS MISSING!
+app.use('/api/gigs', require('./routes/gigRoutes'));
+
+// Health check endpoint for deployment platforms
+app.get('/health', (req, res) => {
+    res.status(200).json({ 
+        status: 'ok', 
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime()
+    });
+});
 
 // Root route to test backend
 app.get('/', (req, res) => {
-    res.send('✅ Backend is working!');
+    res.json({ 
+        message: '✅ SkillShare Backend API is running!',
+        version: '1.0.0',
+        docs: '/api'
+    });
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+    console.error('Error:', err.message);
+    res.status(err.status || 500).json({
+        success: false,
+        error: process.env.NODE_ENV === 'production' 
+            ? 'An unexpected error occurred' 
+            : err.message
+    });
+});
+
+// Handle 404 routes
+app.use((req, res) => {
+    res.status(404).json({ success: false, error: 'Route not found' });
 });
 
 // Start the server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Backend server running on port ${PORT}`));
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Backend server running on port ${PORT}`);
+    console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
+});

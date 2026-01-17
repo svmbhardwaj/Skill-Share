@@ -133,3 +133,28 @@ exports.getGigs = async (req, res) => {
         res.status(500).json({ success: false, error: 'Server error while fetching gigs.' });
     }
 };
+
+// @desc    Get current user's gigs
+// @route   GET /api/gigs/my
+// @access  Private (requires authentication)
+exports.getMyGigs = async (req, res) => {
+    try {
+        if (!req.user || !req.user.id) {
+            return res.status(401).json({ success: false, error: 'Not authorized' });
+        }
+
+        const gigs = await Gig.find({ postedBy: req.user.id })
+            .populate('postedBy', 'name email')
+            .sort({ createdAt: -1 }); // Most recent first
+
+        res.status(200).json({
+            success: true,
+            count: gigs.length,
+            data: gigs
+        });
+
+    } catch (error) {
+        console.error('Error fetching user gigs:', error);
+        res.status(500).json({ success: false, error: 'Server error while fetching your gigs.' });
+    }
+};
