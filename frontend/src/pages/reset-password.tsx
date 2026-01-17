@@ -60,7 +60,7 @@ export default function ResetPassword() {
             } else {
                 setError(data.error || 'Failed to reset password.');
             }
-        } catch (err) {
+        } catch {
             setError('Could not connect to the server.');
         } finally {
             setLoading(false);

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
+import Image from 'next/image';
 import Navbar from '../components/Navbar';
 import styles from '../styles/Profile.module.css';
 
@@ -22,7 +23,7 @@ interface Stats {
 export default function Profile() {
     const router = useRouter();
     const [user, setUser] = useState<User | null>(null);
-    const [stats, setStats] = useState<Stats>({ gigsPosted: 0, jobsCompleted: 0, totalEarnings: 0 });
+    const [_stats, _setStats] = useState<Stats>({ gigsPosted: 0, jobsCompleted: 0, totalEarnings: 0 });
     const [loading, setLoading] = useState(true);
     const [editMode, setEditMode] = useState(false);
     const [name, setName] = useState('');
@@ -130,7 +131,7 @@ export default function Profile() {
                     <div className={styles.profileHeader}>
                         <div className={styles.avatarSection}>
                             {user?.avatar ? (
-                                <img src={user.avatar} alt={user.name} className={styles.avatar} />
+                                <Image src={user.avatar} alt={user.name} className={styles.avatar} width={120} height={120} />
                             ) : (
                                 <div className={styles.avatarPlaceholder}>
                                     {user ? getInitials(user.name) : 'U'}

@@ -72,7 +72,7 @@ export default function Register() {
             } else {
                 setError(data.error || 'Registration failed.');
             }
-        } catch (err) {
+        } catch {
             setError('Could not connect to the server.');
         } finally {
             setLoading(false);
@@ -108,7 +108,7 @@ export default function Register() {
             } else {
                 setError(data.error || 'Google registration failed.');
             }
-        } catch (err) {
+        } catch {
             setError('Could not connect to the server.');
         } finally {
             setLoading(false);

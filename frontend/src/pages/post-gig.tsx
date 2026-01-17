@@ -59,7 +59,7 @@ export default function PostGig() {
             } else {
                 setError(data.error || 'Failed to post gig.');
             }
-        } catch (err) {
+        } catch {
             setError('Could not connect to the server.');
         }
     };
