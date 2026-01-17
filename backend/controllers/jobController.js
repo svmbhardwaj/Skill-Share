@@ -13,6 +13,11 @@ exports.createJobRequest = async (req, res) => {
             return res.status(404).json({ success: false, error: 'Service not found' });
         }
 
+        // Prevent self-hiring
+        if (service.provider.toString() === req.user.id) {
+            return res.status(400).json({ success: false, error: 'You cannot hire yourself' });
+        }
+
         const job = await Job.create({
             client: req.user.id, // from protect middleware
             provider: service.provider,

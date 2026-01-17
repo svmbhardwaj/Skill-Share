@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
+import * as jsonwebtoken from 'jsonwebtoken';
 import styles from '../../styles/GigDetail.module.css'; // Import the new CSS file
 
 // Define the Gig type
@@ -12,6 +13,7 @@ interface Gig {
     price: number;
     contactInfo: string;
     provider: {
+        _id: string;
         name: string;
         verified: boolean;
     };
@@ -24,8 +26,24 @@ export default function GigDetail() {
     const [gig, setGig] = useState<Gig | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [currentUserId, setCurrentUserId] = useState<string>('');
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
 
     useEffect(() => {
+        // Get current user ID from token
+        const token = localStorage.getItem('token');
+        if (token) {
+            setIsLoggedIn(true);
+            try {
+                const decoded = jsonwebtoken.decode(token) as { id: string } | null;
+                if (decoded?.id) {
+                    setCurrentUserId(decoded.id);
+                }
+            } catch (e) {
+                console.error('Error decoding token:', e);
+            }
+        }
+
         if (id) {
             const fetchGigDetails = async () => {
                 try {
@@ -102,9 +120,18 @@ export default function GigDetail() {
                         <p><strong>Contact:</strong> {gig.contactInfo}</p>
                     </div>
 
-                    <button className={styles.hireButton} onClick={handleHire}>
-                        Hire {gig.provider.name}
-                    </button>
+                    {/* Show different states based on user */}
+                    {!isLoggedIn ? (
+                        <button className={styles.hireButton} onClick={() => router.push('/login')}>
+                            Login to Hire
+                        </button>
+                    ) : currentUserId === String(gig.provider._id) ? (
+                        <p className={styles.ownGigMessage}>This is your own gig</p>
+                    ) : (
+                        <button className={styles.hireButton} onClick={handleHire}>
+                            Hire {gig.provider.name}
+                        </button>
+                    )}
                 </div>
             </main>
         </>
