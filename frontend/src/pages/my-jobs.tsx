@@ -210,18 +210,18 @@ export default function MyJobs() {
                                 </div>
                                 <div className={styles.actions}>
                                     {/* Action for the Provider to Accept/Decline a requested job */}
-                                    {job.status === 'requested' && currentUserId === job.provider._id && (
+                                    {job.status === 'requested' && currentUserId === String(job.provider._id) && (
                                         <>
                                             <button onClick={() => handleStatusUpdate(job._id, 'accepted')} className={styles.acceptBtn}>Accept</button>
                                             <button onClick={() => handleStatusUpdate(job._id, 'cancelled')} className={styles.declineBtn}>Decline</button>
                                         </>
                                     )}
                                     {/* Action for the Client to Pay for an accepted job */}
-                                    {job.status === 'accepted' && currentUserId === job.client._id && (
+                                    {job.status === 'accepted' && currentUserId === String(job.client._id) && (
                                         <button onClick={() => handlePayNow(job._id)} className={styles.payBtn}>Pay Now</button>
                                     )}
                                     {/* Action for both Client/Provider to Cancel if not paid/completed */}
-                                    {(job.status === 'requested' || job.status === 'accepted') && (currentUserId === job.client._id || currentUserId === job.provider._id) && (
+                                    {(job.status === 'requested' || job.status === 'accepted') && (currentUserId === String(job.client._id) || currentUserId === String(job.provider._id)) && (
                                         <button onClick={() => handleStatusUpdate(job._id, 'cancelled')} className={styles.cancelActionBtn}>Cancel Job</button>
                                     )}
                                 </div>
