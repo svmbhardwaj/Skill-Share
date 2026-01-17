@@ -110,3 +110,81 @@
     background-color: #3b82f6;
     color: #fff;
 }
+
+.cancelActionBtn {
+    background-color: #6b7280;
+    color: #fff;
+}
+
+.loadingContainer {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #121212;
+    color: #fff;
+    font-size: 1.2rem;
+}
+
+.errorContainer {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background-color: #121212;
+    color: #fff;
+    gap: 1rem;
+}
+
+.retryBtn {
+    padding: 0.8rem 1.5rem;
+    background-color: #3b82f6;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.retryBtn:hover {
+    background-color: #2563eb;
+}
+
+.noJobs {
+    text-align: center;
+    padding: 3rem;
+    background-color: #1e1e1e;
+    border-radius: 12px;
+    border: 1px solid #333;
+}
+
+.noJobs p {
+    color: #888;
+    margin-bottom: 1.5rem;
+    font-size: 1.1rem;
+}
+
+.browseGigsBtn {
+    padding: 0.8rem 1.5rem;
+    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.browseGigsBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);
+}
+
+.paymentSection {
+    background: linear-gradient(135deg, #1e3a5f 0%, #1e1e1e 100%);
+    border: 1px solid #3b82f6;
+}

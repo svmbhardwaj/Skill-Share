@@ -3,7 +3,6 @@ import Head from 'next/head';
 import Link from 'next/link';
 import styles from '../styles/Browse.module.css';
 import Image from 'next/image';
-import Navbar from '../components/Navbar';
 
 // Define the Gig type
 interface Gig {
@@ -73,8 +72,6 @@ export default function BrowseGigs() {
                 <title>Browse Gigs | SkillShare</title>
                 <meta name="description" content="Find trusted services offered by your community" />
             </Head>
-
-            <Navbar />
 
             <main className={styles.main}>
                 <h1 className={styles.heading}>
