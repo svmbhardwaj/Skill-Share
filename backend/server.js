@@ -28,6 +28,8 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(',').map(origin => origin.trim())
     : ['http://localhost:3000'];
 
+console.log('Allowed Origins:', allowedOrigins); // Debug log
+
 app.use(cors({
     origin: function (origin, callback) {
         // Allow requests with no origin (mobile apps, curl, etc.)
@@ -36,12 +38,15 @@ app.use(cors({
         if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
             callback(null, true);
         } else {
-            callback(new Error('Not allowed by CORS'));
+            console.log('CORS blocked origin:', origin); // Debug log
+            callback(null, false);
         }
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    preflightContinue: false,
+    optionsSuccessStatus: 204
 }));
 
 // --- Mount Routers ---
