@@ -196,7 +196,7 @@ export default function MyJobs() {
                     {jobs.length === 0 ? (
                         <div className={styles.noJobs}>
                             <p>You have no active jobs or job requests at the moment.</p>
-                            <button onClick={() => router.push('/browse-gigs')} className={styles.browseGigsBtn}>Browse Gigs</button>
+                            <button onClick={() => router.push('/browse')} className={styles.browseGigsBtn}>Browse Gigs</button>
                         </div>
                     ) : (
                         jobs.map(job => (

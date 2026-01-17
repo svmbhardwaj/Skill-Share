@@ -3,6 +3,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { ToastProvider } from '../components/Toast';
+import Navbar from '../components/Navbar';
 import '../styles/globals.css';
 
 // Replace with your Stripe publishable key from the .env file or directly
@@ -13,6 +14,7 @@ export default function App({ Component, pageProps }: AppProps) {
         <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''}>
             <ToastProvider>
                 <Elements stripe={stripePromise}>
+                    <Navbar />
                     <Component {...pageProps} />
                 </Elements>
             </ToastProvider>
