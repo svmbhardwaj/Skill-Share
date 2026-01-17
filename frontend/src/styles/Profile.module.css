@@ -1,0 +1,325 @@
+.main {
+    min-height: 100vh;
+    background: linear-gradient(180deg, #0a0a0a 0%, #121212 100%);
+    padding-top: 100px;
+    padding-bottom: 3rem;
+}
+
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+}
+
+.loadingContainer {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #0a0a0a;
+}
+
+/* Profile Header */
+.profileHeader {
+    display: flex;
+    align-items: flex-start;
+    gap: 2rem;
+    padding: 2.5rem;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    margin-bottom: 2rem;
+    animation: fadeIn 0.6s ease-out;
+}
+
+.avatarSection {
+    position: relative;
+}
+
+.avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid rgba(59, 130, 246, 0.5);
+}
+
+.avatarPlaceholder {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 2.5rem;
+    border: 4px solid rgba(59, 130, 246, 0.5);
+}
+
+.onlineIndicator {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    width: 20px;
+    height: 20px;
+    background: #22c55e;
+    border: 3px solid #0a0a0a;
+    border-radius: 50%;
+}
+
+.userInfo {
+    flex: 1;
+}
+
+.userName {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.editBtn {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    padding: 0.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    color: #9ca3af;
+    transition: all 0.2s ease;
+}
+
+.editBtn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+}
+
+.userEmail {
+    color: #9ca3af;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+}
+
+.badges {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    font-size: 0.85rem;
+    color: #d1d5db;
+}
+
+.memberSince {
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+/* Edit Name */
+.editName {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.nameInput {
+    padding: 0.75rem 1rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(59, 130, 246, 0.5);
+    border-radius: 12px;
+    color: #fff;
+    outline: none;
+    width: 100%;
+    max-width: 300px;
+}
+
+.nameInput:focus {
+    border-color: #3b82f6;
+}
+
+.editActions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.saveBtn, .cancelBtn {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.saveBtn {
+    background: #3b82f6;
+    color: white;
+    border: none;
+}
+
+.saveBtn:hover {
+    background: #2563eb;
+}
+
+.cancelBtn {
+    background: transparent;
+    color: #9ca3af;
+    border: 1px solid #333;
+}
+
+.cancelBtn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+}
+
+/* Stats Grid */
+.statsGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.statCard {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1.5rem;
+    background: rgba(30, 30, 30, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    transition: all 0.3s ease;
+    animation: fadeIn 0.6s ease-out;
+}
+
+.statCard:hover {
+    transform: translateY(-4px);
+    border-color: rgba(59, 130, 246, 0.3);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.statIcon {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.statIconBlue {
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+}
+
+.statIconGreen {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+}
+
+.statIconOrange {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+
+.statInfo {
+    display: flex;
+    flex-direction: column;
+}
+
+.statValue {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.statLabel {
+    color: #9ca3af;
+    font-size: 0.9rem;
+}
+
+/* Quick Actions */
+.quickActions {
+    animation: fadeIn 0.6s ease-out 0.2s backwards;
+}
+
+.quickActions h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 1.25rem;
+}
+
+.actionsGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+.actionCard {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    background: rgba(30, 30, 30, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    color: #d1d5db;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.actionCard:hover {
+    background: rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.3);
+    color: #fff;
+    transform: translateX(5px);
+}
+
+.actionCard svg {
+    color: #3b82f6;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .profileHeader {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .badges {
+        justify-content: center;
+    }
+
+    .statsGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .actionsGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .userName {
+        justify-content: center;
+    }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
