@@ -30,17 +30,27 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
 
 console.log('Allowed Origins:', allowedOrigins); // Debug log
 
+// Handle OPTIONS preflight requests explicitly
+app.options('*', cors());
+
 app.use(cors({
     origin: function (origin, callback) {
         // Allow requests with no origin (mobile apps, curl, etc.)
         if (!origin) return callback(null, true);
         
+        // Check exact match
         if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
-            callback(null, true);
-        } else {
-            console.log('CORS blocked origin:', origin); // Debug log
-            callback(null, false);
+            return callback(null, true);
         }
+        
+        // Check for Vercel preview deployments (pattern: *-shivam-bhardwajs-projects-d1c28ead.vercel.app)
+        if (origin.includes('shivam-bhardwajs-projects') && origin.includes('vercel.app')) {
+            console.log('Allowing Vercel preview deployment:', origin);
+            return callback(null, true);
+        }
+        
+        console.log('CORS blocked origin:', origin); // Debug log
+        callback(null, false);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
