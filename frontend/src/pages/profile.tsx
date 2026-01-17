@@ -23,7 +23,7 @@ interface Stats {
 export default function Profile() {
     const router = useRouter();
     const [user, setUser] = useState<User | null>(null);
-    const [_stats, _setStats] = useState<Stats>({ gigsPosted: 0, jobsCompleted: 0, totalEarnings: 0 });
+    const [stats] = useState<Stats>({ gigsPosted: 0, jobsCompleted: 0, totalEarnings: 0 });
     const [loading, setLoading] = useState(true);
     const [editMode, setEditMode] = useState(false);
     const [name, setName] = useState('');

@@ -21,24 +21,8 @@ export default function BrowseGigs() {
     const [gigs, setGigs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [user, setUser] = useState<{ name: string; avatar?: string } | null>(null);
 
     useEffect(() => {
-        // Check login status
-        const token = localStorage.getItem('token');
-        if (token) {
-            setIsLoggedIn(true);
-            fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/auth/me`, {
-                headers: { Authorization: `Bearer ${token}` }
-            })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.name) setUser(data);
-                })
-                .catch(console.error);
-        }
-
         // --- THIS IS THE NEW DEFAULT LOCATION ---
         const defaultLocation = {
             latitude: 28.6139, // Coordinates for Delhi
@@ -56,7 +40,7 @@ export default function BrowseGigs() {
                 } else {
                     setError(data.error || 'Failed to fetch gigs.');
                 }
-            } catch (err) {
+            } catch {
                 setError('An error occurred while fetching data.');
             } finally {
                 setLoading(false);
@@ -82,12 +66,6 @@ export default function BrowseGigs() {
         }
     }, []);
 
-    const handleLogout = () => {
-        localStorage.removeItem('token');
-        setIsLoggedIn(false);
-        setUser(null);
-    };
-
     // The rest of your component's return statement (JSX) stays the same...
     return (
         <>
@@ -96,7 +74,7 @@ export default function BrowseGigs() {
                 <meta name="description" content="Find trusted services offered by your community" />
             </Head>
 
-            <Navbar isLoggedIn={isLoggedIn} user={user} onLogout={handleLogout} />
+            <Navbar />
 
             <main className={styles.main}>
                 <h1 className={styles.heading}>

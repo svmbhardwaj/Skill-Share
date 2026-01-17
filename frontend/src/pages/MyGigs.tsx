@@ -27,23 +27,23 @@ interface Gig {
     createdAt: string;
 }
 
-// TypeScript types
-interface DecodedToken {
-    id: string;      // The user ID, which you definitely expect
-    exp?: number;    // Standard JWT expiration time (optional, as it's not always critical for frontend use)
-    iat?: number;    // Standard JWT issued at time (optional)
-    name?: string;   // If your JWT payload includes the user's name
-    email?: string;  // If your JWT payload includes the user's email
-    // Add any other specific properties you know your JWT payload might contain,
-    // making them optional with '?' if they might not always be present.
-    // Example: role?: string; if you have user roles in your JWT
+interface ServiceResponse {
+    _id: string;
+    title: string;
+    description: string;
+    category: string;
+    location?: {
+        address?: string;
+    };
+    provider: UserReference;
+    createdAt: string;
 }
+
 export default function MyGigs() {
     const router = useRouter();
     const [myGigs, setMyGigs] = useState<Gig[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -54,9 +54,7 @@ export default function MyGigs() {
 
         try {
             const decodedPayload: string | object | null = jsonwebtoken.decode(token);
-            if (typeof decodedPayload === 'object' && decodedPayload !== null && 'id' in decodedPayload) {
-                setCurrentUserId((decodedPayload as DecodedToken).id);
-            } else {
+            if (!(typeof decodedPayload === 'object' && decodedPayload !== null && 'id' in decodedPayload)) {
                 throw new Error('Invalid token payload structure or missing ID.');
             }
         } catch (e) {
@@ -84,7 +82,7 @@ export default function MyGigs() {
                 const data = await res.json();
                 if (data.success && Array.isArray(data.data)) {
                     // Map service data to gig format
-                    const mappedGigs = data.data.map((service: any) => ({
+                    const mappedGigs = data.data.map((service: ServiceResponse) => ({
                         _id: service._id,
                         title: service.title,
                         description: service.description,

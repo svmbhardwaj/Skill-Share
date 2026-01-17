@@ -1,37 +1,9 @@
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/router';
 import Head from 'next/head';
 import styles from '../styles/Home.module.css';
 import Link from 'next/link';
 import Navbar from '../components/Navbar';
 
 export default function Home() {
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [user, setUser] = useState<{ name: string; avatar?: string } | null>(null);
-    const router = useRouter();
-
-    useEffect(() => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            setIsLoggedIn(true);
-            // Fetch user info
-            fetch(`${process.env.NEXT_PUBLIC_BACKEND_API_URL}/api/auth/me`, {
-                headers: { Authorization: `Bearer ${token}` }
-            })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.name) setUser(data);
-                })
-                .catch(console.error);
-        }
-    }, []);
-
-    const handleLogout = () => {
-        localStorage.removeItem('token');
-        setIsLoggedIn(false);
-        setUser(null);
-        router.push('/');
-    };
 
     return (
         <>
@@ -41,7 +13,7 @@ export default function Home() {
             </Head>
 
             <div className={styles.main}>
-                <Navbar isLoggedIn={isLoggedIn} user={user} onLogout={handleLogout} />
+                <Navbar />
 
                 {/* --- Hero Section --- */}
                 <header className={styles.hero}>
@@ -65,7 +37,7 @@ export default function Home() {
                                 Find a Skill
                             </button>
                         </Link>
-                        <Link href={isLoggedIn ? "/post-gig" : "/register"}>
+                        <Link href="/post-gig">
                             <button className={`${styles.btn} ${styles.secondary}`}>
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <path d="M12 5v14M5 12h14" />
@@ -165,7 +137,7 @@ export default function Home() {
                         <div className={styles.testimonialCard}>
                             <div className={styles.testimonialStars}>★★★★★</div>
                             <p className={styles.testimonialText}>
-                                "Found an amazing tutor for my daughter within hours. The whole process was seamless!"
+                                Found an amazing tutor for my daughter within hours. The whole process was seamless!
                             </p>
                             <div className={styles.testimonialAuthor}>
                                 <div className={styles.authorAvatar}>S</div>
@@ -178,7 +150,7 @@ export default function Home() {
                         <div className={styles.testimonialCard}>
                             <div className={styles.testimonialStars}>★★★★★</div>
                             <p className={styles.testimonialText}>
-                                "As a freelance designer, this platform helped me connect with local clients I never would have found otherwise."
+                                As a freelance designer, this platform helped me connect with local clients I never would have found otherwise.
                             </p>
                             <div className={styles.testimonialAuthor}>
                                 <div className={styles.authorAvatar}>M</div>
@@ -191,7 +163,7 @@ export default function Home() {
                         <div className={styles.testimonialCard}>
                             <div className={styles.testimonialStars}>★★★★★</div>
                             <p className={styles.testimonialText}>
-                                "Got my AC fixed same day! The handyman was professional and reasonably priced."
+                                Got my AC fixed same day! The handyman was professional and reasonably priced.
                             </p>
                             <div className={styles.testimonialAuthor}>
                                 <div className={styles.authorAvatar}>J</div>

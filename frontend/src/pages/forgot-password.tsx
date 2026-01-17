@@ -29,7 +29,7 @@ export default function ForgotPassword() {
             } else {
                 setError(data.error || 'Failed to send reset email.');
             }
-        } catch (err) {
+        } catch {
             setError('Could not connect to the server.');
         } finally {
             setLoading(false);

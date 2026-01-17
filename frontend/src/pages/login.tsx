@@ -35,7 +35,7 @@ export default function Login() {
             } else {
                 setError(data.error || 'Login failed.');
             }
-        } catch (err) {
+        } catch {
             setError('Could not connect to the server.');
         } finally {
             setLoading(false);
@@ -64,7 +64,7 @@ export default function Login() {
             } else {
                 setError(data.error || 'Google login failed.');
             }
-        } catch (err) {
+        } catch {
             setError('Could not connect to the server.');
         } finally {
             setLoading(false);

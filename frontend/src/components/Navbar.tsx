@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/router';
 import styles from '../styles/Navbar.module.css';
 
@@ -25,7 +26,7 @@ export default function Navbar() {
             if (userData) {
                 try {
                     setUser(JSON.parse(userData));
-                } catch (e) {
+                } catch {
                     console.error('Error parsing user data');
                 }
             }
@@ -113,7 +114,7 @@ export default function Navbar() {
                             <div className={styles.profileMenu}>
                                 <button className={styles.profileBtn}>
                                     {user?.avatar ? (
-                                        <img src={user.avatar} alt={user.name} className={styles.avatar} />
+                                        <Image src={user.avatar} alt={user.name} className={styles.avatar} width={40} height={40} />
                                     ) : (
                                         <div className={styles.avatarPlaceholder}>
                                             {user ? getInitials(user.name) : 'U'}

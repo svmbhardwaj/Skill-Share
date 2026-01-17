@@ -36,7 +36,7 @@ export default function GigDetail() {
                     } else {
                         setError(data.error || 'Failed to fetch gig details.');
                     }
-                } catch (err) {
+                } catch {
                     setError('An error occurred while fetching data.');
                 } finally {
                     setLoading(false);
@@ -71,7 +71,7 @@ export default function GigDetail() {
             } else {
                 alert(`Error: ${data.error}`);
             }
-        } catch (err) {
+        } catch {
             alert('Failed to send hire request.');
         }
     };
