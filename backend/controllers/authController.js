@@ -424,7 +424,7 @@ exports.forgotPassword = async (req, res) => {
         // Email message
         const message = `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <h2 style="color: #3b82f6;">SkillShare Local - Password Reset</h2>
+                <h2 style="color: #3b82f6;">SkillShare - Password Reset</h2>
                 <p>Hi ${user.name},</p>
                 <p>You requested to reset your password. Click the button below to reset it:</p>
                 <div style="text-align: center; margin: 30px 0;">
@@ -435,7 +435,7 @@ exports.forgotPassword = async (req, res) => {
                 <p><strong>This link will expire in 10 minutes.</strong></p>
                 <p>If you didn't request this, please ignore this email.</p>
                 <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 20px 0;">
-                <p style="color: #9ca3af; font-size: 12px;">SkillShare Local Team</p>
+                <p style="color: #9ca3af; font-size: 12px;">SkillShare Team</p>
             </div>
         `;
 
@@ -443,9 +443,9 @@ exports.forgotPassword = async (req, res) => {
         const transporter = createTransporter();
         
         await transporter.sendMail({
-            from: `"SkillShare Local" <${process.env.EMAIL_USER}>`,
+            from: `"SkillShare" <${process.env.EMAIL_USER}>`,
             to: user.email,
-            subject: 'Password Reset Request - SkillShare Local',
+            subject: 'Password Reset Request - SkillShare',
             html: message,
         });
 
