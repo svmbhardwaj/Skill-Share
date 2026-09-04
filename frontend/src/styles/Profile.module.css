@@ -1,0 +1,300 @@
+/* ============================================================
+   PROFILE
+   ============================================================ */
+
+.main {
+    min-height: 100vh;
+    background:
+        radial-gradient(ellipse 60% 40% at 50% -5%, rgba(59, 130, 246, 0.08), transparent),
+        #0a0a0a;
+    padding: 2.5rem 1.5rem 4rem;
+}
+
+.container {
+    max-width: 760px;
+    margin: 0 auto;
+}
+
+/* Profile header */
+.profileHeader {
+    display: flex;
+    align-items: center;
+    gap: 1.75rem;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 22px;
+    margin-bottom: 1.5rem;
+    animation: fadeIn 0.4s ease-out;
+}
+
+.avatarSection {
+    flex-shrink: 0;
+}
+
+.avatar {
+    width: 112px;
+    height: 112px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid rgba(59, 130, 246, 0.4);
+}
+
+.avatarPlaceholder {
+    width: 112px;
+    height: 112px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 2.25rem;
+    border: 3px solid rgba(59, 130, 246, 0.4);
+}
+
+.userInfo {
+    flex: 1;
+    min-width: 0;
+}
+
+.userName {
+    font-size: clamp(1.5rem, 4vw, 1.9rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: #fff;
+    margin-bottom: 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.editBtn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 0.45rem;
+    border-radius: 8px;
+    cursor: pointer;
+    color: #9ca3af;
+    transition: all 0.2s ease;
+}
+
+.editBtn:hover {
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff;
+}
+
+.userEmail {
+    color: #9ca3af;
+    font-size: 1rem;
+    margin-bottom: 0.9rem;
+}
+
+.badges {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.9rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 50px;
+    font-size: 0.83rem;
+    color: #d1d5db;
+}
+
+.memberSince {
+    color: #6b7280;
+    font-size: 0.88rem;
+}
+
+/* Edit name */
+.editName {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.nameInput {
+    padding: 0.75rem 1rem;
+    font-size: 1.4rem;
+    font-weight: 700;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(59, 130, 246, 0.5);
+    border-radius: 12px;
+    color: #fff;
+    outline: none;
+    width: 100%;
+    max-width: 320px;
+}
+
+.nameInput:focus {
+    border-color: #3b82f6;
+}
+
+.editActions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.saveBtn, .cancelBtn {
+    padding: 0.55rem 1.1rem;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.saveBtn {
+    background: #3b82f6;
+    color: white;
+    border: none;
+}
+
+.saveBtn:hover:not(:disabled) {
+    background: #2563eb;
+}
+
+.saveBtn:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+.cancelBtn {
+    background: transparent;
+    color: #9ca3af;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.cancelBtn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+}
+
+/* Stats */
+.statsGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 2.25rem;
+}
+
+.statCard {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    animation: fadeIn 0.4s ease-out 0.1s backwards;
+}
+
+.statIcon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    flex-shrink: 0;
+}
+
+.statIconBlue {
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+}
+
+.statIconGreen {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+}
+
+.statInfo {
+    display: flex;
+    flex-direction: column;
+}
+
+.statValue {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #fff;
+}
+
+.statLabel {
+    color: #9ca3af;
+    font-size: 0.88rem;
+}
+
+/* Quick actions */
+.quickActions {
+    animation: fadeIn 0.4s ease-out 0.15s backwards;
+}
+
+.quickActions h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 1rem;
+}
+
+.actionsGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.9rem;
+}
+
+.actionCard {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 1.1rem 1.25rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    color: #d1d5db;
+    font-size: 0.98rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    text-align: left;
+}
+
+.actionCard:hover {
+    background: rgba(59, 130, 246, 0.08);
+    border-color: rgba(59, 130, 246, 0.3);
+    color: #fff;
+    transform: translateX(4px);
+}
+
+.actionCard svg {
+    color: #3b82f6;
+    flex-shrink: 0;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 768px) {
+    .main { padding: 1.75rem 1rem 3rem; }
+    .profileHeader {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: 1.75rem 1.25rem;
+    }
+    .userName { justify-content: center; }
+    .badges { justify-content: center; }
+    .editName { align-items: center; }
+    .editActions { justify-content: center; }
+    .statsGrid { grid-template-columns: 1fr; }
+    .actionsGrid { grid-template-columns: 1fr; }
+}

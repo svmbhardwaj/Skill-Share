@@ -1,0 +1,11 @@
+# Local agent configuration (may contain API keys)
+.claude/
+
+# Environment files (never commit secrets; templates excluded too per repo policy)
+.env
+.env.*
+
+# Dependencies & build output (defense in depth; nested .gitignores also cover these)
+node_modules/
+.next/
+out/

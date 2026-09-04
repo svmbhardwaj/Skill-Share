@@ -1,0 +1,405 @@
+/* ============================================================
+   MY JOBS — clear states and next actions
+   ============================================================ */
+
+.main {
+    min-height: 100vh;
+    background:
+        radial-gradient(ellipse 60% 40% at 50% -5%, rgba(59, 130, 246, 0.08), transparent),
+        #0a0a0a;
+    padding: 2.5rem 1.5rem 4rem;
+}
+
+.container {
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+.pageHeader {
+    margin-bottom: 2rem;
+}
+
+.heading {
+    font-size: clamp(1.75rem, 4vw, 2.25rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: #fff;
+    margin-bottom: 0.4rem;
+}
+
+.headingSubtitle {
+    color: #9ca3af;
+    font-size: 1.02rem;
+}
+
+/* Job list */
+.jobsList {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Job card */
+.jobCard {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 18px;
+    padding: 1.5rem 1.75rem;
+    animation: fadeIn 0.35s ease-out;
+}
+
+.paidCard {
+    border-color: rgba(34, 197, 94, 0.25);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.03), rgba(34, 197, 94, 0.04));
+}
+
+.jobHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 0.9rem;
+}
+
+.jobTitle {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+    flex: 1;
+    letter-spacing: -0.01em;
+}
+
+/* Status badge */
+.statusBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.8rem;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.requested {
+    background: rgba(245, 158, 11, 0.12);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.accepted {
+    background: rgba(59, 130, 246, 0.12);
+    color: #93c5fd;
+    border: 1px solid rgba(59, 130, 246, 0.25);
+}
+
+.inProgress {
+    background: rgba(168, 85, 247, 0.12);
+    color: #c084fc;
+    border: 1px solid rgba(168, 85, 247, 0.25);
+}
+
+.completed {
+    background: rgba(34, 197, 94, 0.12);
+    color: #4ade80;
+    border: 1px solid rgba(34, 197, 94, 0.25);
+}
+
+.paid {
+    background: rgba(34, 197, 94, 0.18);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.cancelled {
+    background: rgba(239, 68, 68, 0.1);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+/* Meta */
+.jobMeta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.25rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 1.1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.metaItem {
+    color: #9ca3af;
+    font-size: 0.9rem;
+}
+
+.price {
+    color: #fff;
+    font-weight: 700;
+}
+
+/* Actions */
+.jobActions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.jobActions button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.65rem 1.35rem;
+    border-radius: 12px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.jobActions button:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+.acceptBtn {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: white;
+}
+
+.acceptBtn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 18px rgba(34, 197, 94, 0.35);
+}
+
+.startBtn {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    color: white;
+}
+
+.startBtn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 18px rgba(139, 92, 246, 0.35);
+}
+
+.completeBtn {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: white;
+}
+
+.completeBtn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 18px rgba(34, 197, 94, 0.35);
+}
+
+.payBtn {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+    box-shadow: 0 2px 12px rgba(59, 130, 246, 0.3);
+}
+
+.payBtn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(59, 130, 246, 0.45);
+}
+
+.declineBtn,
+.cancelBtn {
+    background: rgba(255, 255, 255, 0.05);
+    color: #9ca3af;
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.declineBtn:hover:not(:disabled),
+.cancelBtn:hover:not(:disabled) {
+    background: rgba(239, 68, 68, 0.1);
+    color: #f87171;
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.doneNote {
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+/* Review form */
+.reviewLink {
+    background: none;
+    border: none;
+    padding: 0;
+    color: #93c5fd;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.reviewLink:hover {
+    color: #60a5fa;
+}
+
+.reviewForm {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    padding: 1.25rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+}
+
+.stars {
+    display: flex;
+    gap: 0.35rem;
+}
+
+.star {
+    background: none;
+    border: none;
+    font-size: 1.6rem;
+    color: #4b5563;
+    cursor: pointer;
+    padding: 0 0.1rem;
+    transition: color 0.15s ease, transform 0.15s ease;
+    line-height: 1;
+}
+
+.star:hover {
+    transform: scale(1.15);
+}
+
+.starActive {
+    color: #f59e0b;
+}
+
+.reviewInput {
+    padding: 0.75rem 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.04);
+    color: #fff;
+    font-size: 0.95rem;
+    outline: none;
+    resize: vertical;
+    font-family: inherit;
+}
+
+.reviewInput:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.reviewInput::placeholder {
+    color: #4b5563;
+}
+
+.reviewActions {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: flex-end;
+}
+
+.reviewCancel {
+    padding: 0.6rem 1.2rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #9ca3af;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.reviewCancel:hover:not(:disabled) {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.reviewSubmit {
+    padding: 0.6rem 1.4rem;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    border: none;
+    color: #fff;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.reviewSubmit:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.35);
+}
+
+.reviewSubmit:disabled,
+.reviewCancel:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+/* States */
+.stateBlock {
+    text-align: center;
+    padding: 5rem 2rem;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px dashed rgba(255, 255, 255, 0.12);
+    border-radius: 20px;
+}
+
+.stateIcon {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 1rem;
+}
+
+.stateBlock h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 0.5rem;
+}
+
+.stateBlock p {
+    color: #9ca3af;
+    margin-bottom: 1.5rem;
+}
+
+.retryBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.retryBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.35);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 768px) {
+    .main { padding: 1.75rem 1rem 3rem; }
+    .jobCard { padding: 1.25rem; }
+    .jobHeader { flex-direction: column; gap: 0.75rem; }
+    .jobActions { flex-direction: column; align-items: stretch; }
+    .jobActions button { width: 100%; }
+    .doneNote { text-align: center; }
+}
