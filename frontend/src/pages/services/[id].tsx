@@ -116,12 +116,22 @@ export default function ServiceDetail() {
     if (loading) {
         return (
             <main className={styles.main}>
-                <div className={styles.card} aria-busy="true">
-                    <div className={styles.skeletonLine} style={{ width: '60%', height: 32 }} />
-                    <div className={styles.skeletonLine} style={{ width: '35%', height: 20 }} />
-                    <div className={styles.skeletonLine} style={{ width: '100%', height: 16 }} />
-                    <div className={styles.skeletonLine} style={{ width: '90%', height: 16 }} />
-                    <ProfileSkeleton />
+                <div className={styles.container}>
+                    <div className={styles.layout}>
+                        <div className={styles.infoCard} aria-busy="true">
+                            <div className={styles.skeletonLine} style={{ width: '35%', height: 28 }} />
+                            <div className={styles.skeletonLine} style={{ width: '60%', height: 36 }} />
+                            <div className={styles.skeletonLine} style={{ width: '100%', height: 16 }} />
+                            <div className={styles.skeletonLine} style={{ width: '90%', height: 16 }} />
+                            <div style={{ marginTop: '1.5rem' }}>
+                                <ProfileSkeleton />
+                            </div>
+                        </div>
+                        <div className={styles.actionCard} aria-busy="true">
+                            <div className={styles.skeletonLine} style={{ width: '70%', height: 24 }} />
+                            <div className={styles.skeletonLine} style={{ width: '100%', height: 44 }} />
+                        </div>
+                    </div>
                 </div>
             </main>
         );
@@ -164,58 +174,119 @@ export default function ServiceDetail() {
                 <title>{service.title} | SkillShare</title>
             </Head>
             <main className={styles.main}>
-                <div className={styles.card}>
-                    <div className={styles.cardTop}>
-                        <span className={styles.categoryTag}>{service.category}</span>
-                        {hasRating && (
-                            <span className={styles.rating}>
-                                ★ {service.averageRating?.toFixed(1)} · {service.totalReviews} review{service.totalReviews === 1 ? '' : 's'}
-                            </span>
-                        )}
-                    </div>
+                <div className={styles.container}>
+                    <Link href="/browse" className={styles.backLink}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M19 12H5" /><path d="m12 19-7-7 7-7" />
+                        </svg>
+                        Browse services
+                    </Link>
 
-                    <h1 className={styles.title}>{service.title}</h1>
-                    <p className={styles.description}>{service.description}</p>
-
-                    <div className={styles.priceRow}>
-                        <span className={styles.priceLabel}>Price</span>
-                        <span className={styles.price}>{formatPrice(service.price, service.currency)}</span>
-                    </div>
-
-                    <hr className={styles.divider} />
-
-                    <div className={styles.providerSection}>
-                        <span className={styles.avatar} aria-hidden="true">{getInitials(service.provider.name)}</span>
-                        <div className={styles.providerInfo}>
-                            <p className={styles.providerName}>
-                                {service.provider.name}
-                                {service.provider.verified && <span className={styles.verified} title="Verified">✔ Verified</span>}
-                            </p>
-                            {locationAddress && <p className={styles.providerMeta}>{locationAddress}</p>}
-                        </div>
-                    </div>
-
-                    <div className={styles.actionArea}>
-                        {!isAuthenticated ? (
-                            <button className={styles.requestButton} onClick={() => router.push('/login')}>
-                                Log in to Request
-                            </button>
-                        ) : isOwnService ? (
-                            <p className={styles.ownServiceMessage}>This is your own service.</p>
-                        ) : requestSent ? (
-                            <div className={styles.requestSent}>
-                                <p>✓ Request sent!</p>
-                                <Link href="/my-jobs" className={styles.secondaryButton}>Track in My Jobs</Link>
+                    <div className={styles.layout}>
+                        {/* Main information */}
+                        <article className={styles.infoCard}>
+                            <div className={styles.cardTop}>
+                                <span className={styles.categoryTag}>{service.category}</span>
+                                {hasRating && (
+                                    <span className={styles.rating}>
+                                        ★ {service.averageRating?.toFixed(1)} · {service.totalReviews} review{service.totalReviews === 1 ? '' : 's'}
+                                    </span>
+                                )}
                             </div>
-                        ) : (
-                            <button
-                                className={styles.requestButton}
-                                onClick={handleRequest}
-                                disabled={requesting}
-                            >
-                                {requesting ? 'Sending…' : `Request ${service.provider.name.split(' ')[0]}'s Service`}
-                            </button>
-                        )}
+
+                            <h1 className={styles.title}>{service.title}</h1>
+                            <p className={styles.description}>{service.description}</p>
+
+                            <div className={styles.providerSection}>
+                                <div className={styles.provider}>
+                                    <span className={styles.avatar} aria-hidden="true">{getInitials(service.provider.name)}</span>
+                                    <div className={styles.providerInfo}>
+                                        <p className={styles.providerName}>
+                                            Offered by {service.provider.name}
+                                            {service.provider.verified && (
+                                                <span className={styles.verified} title="Verified">✔ Verified</span>
+                                            )}
+                                        </p>
+                                        {locationAddress && (
+                                            <p className={styles.providerMeta}>
+                                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                                                    <path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" />
+                                                </svg>
+                                                {locationAddress}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+
+                        {/* Price + action */}
+                        <aside className={styles.actionCard} aria-label="Service price and request">
+                            <p className={styles.priceLabel}>Price</p>
+                            <p className={styles.price}>{formatPrice(service.price, service.currency)}</p>
+
+                            <div className={styles.actionArea}>
+                                {!isAuthenticated ? (
+                                    <>
+                                        <button className={styles.requestButton} onClick={() => router.push('/login')}>
+                                            Log in to Request
+                                        </button>
+                                        <p className={styles.actionHint}>
+                                            Have an account?{' '}
+                                            <Link href="/login">Log in</Link> or{' '}
+                                            <Link href="/register">register</Link> to request this service.
+                                        </p>
+                                    </>
+                                ) : isOwnService ? (
+                                    <div className={styles.ownServiceBox}>
+                                        <p className={styles.ownServiceTitle}>This is your service</p>
+                                        <p className={styles.ownServiceMessage}>
+                                            Track incoming requests in{' '}
+                                            <Link href="/my-jobs">My Jobs</Link>.
+                                        </p>
+                                        <Link
+                                            href={`/post-service?edit=${service._id}`}
+                                            className={styles.editServiceBtn}
+                                        >
+                                            Edit Service
+                                        </Link>
+                                    </div>
+                                ) : requestSent ? (
+                                    <div className={styles.requestSent}>
+                                        <p className={styles.requestSentTitle}>✓ Request sent!</p>
+                                        <p className={styles.actionHint}>
+                                            The provider has been notified. Track the request in My Jobs.
+                                        </p>
+                                        <Link href="/my-jobs" className={styles.secondaryButton}>
+                                            Track in My Jobs
+                                        </Link>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <button
+                                            className={styles.requestButton}
+                                            onClick={handleRequest}
+                                            disabled={requesting}
+                                        >
+                                            {requesting ? 'Sending…' : `Request ${service.provider.name.split(' ')[0]}'s Service`}
+                                        </button>
+                                        <p className={styles.actionHint}>
+                                            No charge yet — you&apos;ll pay securely once the provider accepts your request.
+                                        </p>
+                                    </>
+                                )}
+                            </div>
+
+                            <div className={styles.actionSteps}>
+                                <p className={styles.actionStepsTitle}>What happens next</p>
+                                <ol className={styles.actionStepsList}>
+                                    <li>The provider gets your request</li>
+                                    <li>Pay once your request is accepted</li>
+                                    <li>The provider completes the work</li>
+                                    <li>Leave a review when it&apos;s done</li>
+                                </ol>
+                            </div>
+                        </aside>
                     </div>
                 </div>
             </main>

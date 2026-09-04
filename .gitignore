@@ -1,9 +1,11 @@
 # Local agent configuration (may contain API keys)
 .claude/
 
-# Environment files (never commit secrets; templates excluded too per repo policy)
+# Environment files (never commit secrets). The .env.example templates below the
+# negation ARE committed as documentation — only real .env files are ignored.
 .env
 .env.*
+!.env.example
 
 # Dependencies & build output (defense in depth; nested .gitignores also cover these)
 node_modules/

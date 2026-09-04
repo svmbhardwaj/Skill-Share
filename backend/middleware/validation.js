@@ -61,7 +61,7 @@ const hireSchema = z.object({
 });
 
 const updateJobStatusSchema = z.object({
-    status: z.enum(['accepted', 'in_progress', 'completed', 'cancelled', 'paid'], {
+    status: z.enum(['accepted', 'in_progress', 'completed', 'cancelled'], {
         errorMap: () => ({ message: 'Invalid status' }),
     }),
 });

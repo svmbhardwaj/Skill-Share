@@ -8,6 +8,10 @@ import { ListSkeleton } from '../components/Skeleton';
 import api, { ApiError } from '../lib/api';
 import styles from '../styles/MyJobs.module.css';
 
+type JobStatus = 'requested' | 'accepted' | 'in_progress' | 'completed' | 'cancelled';
+type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
+type JobView = 'all' | 'buying' | 'selling';
+
 interface Service {
     _id: string;
     title: string;
@@ -23,8 +27,8 @@ interface UserReference {
 
 interface Job {
     _id: string;
-    status: 'requested' | 'accepted' | 'in_progress' | 'completed' | 'paid' | 'cancelled';
-    paymentStatus?: string;
+    status: JobStatus;
+    paymentStatus?: PaymentStatus;
     price: number;
     currency?: string;
     service: Service;
@@ -74,7 +78,15 @@ function loadRazorpayScript(): Promise<boolean> {
     });
 }
 
-// Minimal review form for a completed/paid job (client side)
+const STATUS_CONFIG: Record<JobStatus, { class: string; icon: string; label: string }> = {
+    requested:   { class: styles.requested, icon: '⏳', label: 'Requested' },
+    accepted:    { class: styles.accepted, icon: '✅', label: 'Accepted' },
+    in_progress: { class: styles.inProgress, icon: '🔨', label: 'In Progress' },
+    completed:   { class: styles.completed, icon: '🎉', label: 'Completed' },
+    cancelled:   { class: styles.cancelled, icon: '✕', label: 'Cancelled' },
+};
+
+// Minimal review form for a completed + paid job (client side)
 function JobReviewForm({ jobId, onDone }: { jobId: string; onDone: () => void }) {
     const { showToast } = useToast();
     const [open, setOpen] = useState(false);
@@ -120,6 +132,7 @@ function JobReviewForm({ jobId, onDone }: { jobId: string; onDone: () => void })
 
     return (
         <div className={styles.reviewForm}>
+            <p className={styles.reviewPrompt}>How was the service?</p>
             <div className={styles.stars} role="group" aria-label="Rating">
                 {[1, 2, 3, 4, 5].map(star => (
                     <button
@@ -165,6 +178,7 @@ function MyJobsContent() {
     const [actingJobId, setActingJobId] = useState<string | null>(null);
     const [payingJobId, setPayingJobId] = useState<string | null>(null);
     const [reviewedJobIds, setReviewedJobIds] = useState<Set<string>>(new Set());
+    const [view, setView] = useState<JobView>('all');
 
     const currentUserId = user?.id || '';
 
@@ -199,7 +213,25 @@ function MyJobsContent() {
         fetchJobs();
     }, []);
 
-    const handleStatusUpdate = async (jobId: string, newStatus: Job['status'], successMessage: string) => {
+    const roleOf = (job: Job): 'buying' | 'selling' | null => {
+        if (currentUserId === String(job.client._id)) return 'buying';
+        if (currentUserId === String(job.provider._id)) return 'selling';
+        return null;
+    };
+
+    const visibleJobs = jobs.filter(job => {
+        const role = roleOf(job);
+        if (view === 'buying') return role === 'buying';
+        if (view === 'selling') return role === 'selling';
+        return role !== null;
+    });
+
+    const counts = {
+        buying: jobs.filter(j => roleOf(j) === 'buying').length,
+        selling: jobs.filter(j => roleOf(j) === 'selling').length,
+    };
+
+    const handleStatusUpdate = async (jobId: string, newStatus: JobStatus, successMessage: string) => {
         setActingJobId(jobId);
         try {
             const data = await api.patch<{
@@ -231,7 +263,7 @@ function MyJobsContent() {
                 currency?: string;
                 keyId?: string;
                 error?: string;
-            }>('/api/payment/create-order', { jobId });
+            }>('/api/payments/create-order', { jobId });
 
             if (!data.success || !data.orderId || !data.keyId || typeof data.amount !== 'number') {
                 showToast('Could not initiate payment. ' + (data.error || ''), 'error');
@@ -246,8 +278,12 @@ function MyJobsContent() {
                 return;
             }
 
+            // Prefer the explicit public key from the frontend environment when set;
+            // otherwise use the public key id returned by the backend at checkout.
+            const checkoutKey = process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || data.keyId;
+
             const options: RazorpayOptions = {
-                key: data.keyId,
+                key: checkoutKey,
                 amount: data.amount,
                 currency: data.currency || 'INR',
                 name: 'SkillShare',
@@ -264,16 +300,16 @@ function MyJobsContent() {
                             paymentStatus?: string;
                             jobStatus?: string;
                             error?: string;
-                        }>('/api/payment/verify', {
+                        }>('/api/payments/verify', {
                             orderId: response.razorpay_order_id,
                             paymentId: response.razorpay_payment_id,
                             signature: response.razorpay_signature,
                         });
 
-                        if (verify.success && verify.paymentStatus === 'succeeded') {
+                        if (verify.success && verify.paymentStatus === 'paid') {
                             setJobs(prev => prev.map(job =>
                                 job._id === jobId
-                                    ? { ...job, status: 'paid' as const, paymentStatus: 'succeeded' }
+                                    ? { ...job, paymentStatus: 'paid' as const }
                                     : job
                             ));
                             showToast('Payment successful!', 'success');
@@ -286,36 +322,23 @@ function MyJobsContent() {
                 },
                 modal: {
                     ondismiss: () => {
-                        api.post('/api/payment/status', { orderId: data.orderId, event: 'cancelled' }).catch(() => {});
+                        api.post('/api/payments/status', { orderId: data.orderId, event: 'cancelled' }).catch(() => {});
                     },
                 },
                 events: {
                     'payment.failed': () => {
-                        api.post('/api/payment/status', { orderId: data.orderId, event: 'failed' }).catch(() => {});
+                        api.post('/api/payments/status', { orderId: data.orderId, event: 'failed' }).catch(() => {});
                     },
                 },
             };
 
             const rzp = new window.Razorpay(options);
             rzp.open();
-        } catch (err) {
-            console.error('Payment error:', err);
+        } catch {
             showToast('Failed to initiate payment. Please try again.', 'error');
         } finally {
             setPayingJobId(null);
         }
-    };
-
-    const getStatusConfig = (status: Job['status']) => {
-        const configs: Record<string, { class: string; icon: string; label: string }> = {
-            requested:   { class: styles.requested, icon: '⏳', label: 'Requested' },
-            accepted:    { class: styles.accepted, icon: '✅', label: 'Accepted' },
-            in_progress: { class: styles.inProgress, icon: '🔨', label: 'In Progress' },
-            completed:   { class: styles.completed, icon: '🎉', label: 'Completed' },
-            paid:        { class: styles.paid, icon: '💰', label: 'Paid' },
-            cancelled:   { class: styles.cancelled, icon: '❌', label: 'Cancelled' },
-        };
-        return configs[status] || { class: '', icon: '❓', label: status };
     };
 
     const formatPrice = (price: number, currency?: string) => {
@@ -326,12 +349,25 @@ function MyJobsContent() {
         }).format(price);
     };
 
+    const paymentBadge = (job: Job) => {
+        if (job.paymentStatus === 'paid') {
+            return <span className={`${styles.paymentChip} ${styles.paymentPaid}`}>✓ Payment received</span>;
+        }
+        if (job.paymentStatus === 'failed') {
+            return <span className={`${styles.paymentChip} ${styles.paymentFailed}`}>Payment failed</span>;
+        }
+        return null;
+    };
+
     if (loading) {
         return (
             <main className={styles.main}>
                 <div className={styles.container}>
                     <h1 className={styles.heading}>My Jobs</h1>
                     <p className={styles.headingSubtitle}>Your requests and work in one place.</p>
+                    <div style={{ marginBottom: '1.5rem' }}>
+                        <ListSkeleton count={1} />
+                    </div>
                     <div className={styles.jobsList} aria-busy="true">
                         <ListSkeleton count={3} />
                     </div>
@@ -361,31 +397,84 @@ function MyJobsContent() {
                     <header className={styles.pageHeader}>
                         <h1 className={styles.heading}>My Jobs</h1>
                         <p className={styles.headingSubtitle}>
-                            Requests you&apos;ve made and work you&apos;re doing.
+                            Everything you&apos;re requesting and the work you&apos;re doing.
                         </p>
                     </header>
 
-                    {jobs.length === 0 ? (
+                    {/* Segmented control */}
+                    {jobs.length > 0 && (
+                        <div className={styles.viewTabs} role="tablist" aria-label="Filter jobs">
+                            <button
+                                type="button"
+                                role="tab"
+                                aria-selected={view === 'all'}
+                                className={`${styles.viewTab} ${view === 'all' ? styles.viewTabActive : ''}`}
+                                onClick={() => setView('all')}
+                            >
+                                All <span className={styles.viewCount}>{jobs.length}</span>
+                            </button>
+                            <button
+                                type="button"
+                                role="tab"
+                                aria-selected={view === 'buying'}
+                                className={`${styles.viewTab} ${view === 'buying' ? styles.viewTabActive : ''}`}
+                                onClick={() => setView('buying')}
+                            >
+                                Buying <span className={styles.viewCount}>{counts.buying}</span>
+                            </button>
+                            <button
+                                type="button"
+                                role="tab"
+                                aria-selected={view === 'selling'}
+                                className={`${styles.viewTab} ${view === 'selling' ? styles.viewTabActive : ''}`}
+                                onClick={() => setView('selling')}
+                            >
+                                Selling <span className={styles.viewCount}>{counts.selling}</span>
+                            </button>
+                        </div>
+                    )}
+
+                    {visibleJobs.length === 0 ? (
                         <div className={styles.stateBlock}>
                             <span className={styles.stateIcon} aria-hidden="true">📝</span>
-                            <h2>No jobs yet</h2>
-                            <p>Browse services and request the help you need to get started.</p>
-                            <button onClick={() => router.push('/browse')} className={styles.retryBtn}>
-                                Browse Services
+                            <h2>{view === 'selling' ? 'Nothing you’re selling yet' : view === 'buying' ? 'Nothing you’re buying yet' : 'No jobs yet'}</h2>
+                            <p>
+                                {view === 'selling'
+                                    ? 'Requests from clients for your services will appear here.'
+                                    : 'Browse services and request the help you need to get started.'}
+                            </p>
+                            <button
+                                onClick={() => router.push(view === 'selling' ? '/my-services' : '/browse')}
+                                className={styles.retryBtn}
+                            >
+                                {view === 'selling' ? 'View My Services' : 'Browse Services'}
                             </button>
                         </div>
                     ) : (
                         <div className={styles.jobsList}>
-                            {jobs.map(job => {
-                                const statusConfig = getStatusConfig(job.status);
-                                const isProvider = currentUserId === String(job.provider._id);
-                                const isClient = currentUserId === String(job.client._id);
+                            {visibleJobs.map(job => {
+                                const role = roleOf(job);
+                                const isProvider = role === 'selling';
+                                const isClient = role === 'buying';
+                                const statusConfig = STATUS_CONFIG[job.status];
                                 const busy = actingJobId === job._id || payingJobId === job._id;
+                                const isPaid = job.paymentStatus === 'paid';
 
                                 return (
-                                    <article key={job._id} className={`${styles.jobCard} ${job.status === 'paid' ? styles.paidCard : ''}`}>
+                                    <article key={job._id} className={`${styles.jobCard} ${isPaid ? styles.paidCard : ''}`}>
                                         <div className={styles.jobHeader}>
-                                            <h2 className={styles.jobTitle}>{job.service.title}</h2>
+                                            <div>
+                                                <h2 className={styles.jobTitle}>{job.service.title}</h2>
+                                                <div className={styles.jobMetaInline}>
+                                                    <span>
+                                                        {isClient
+                                                            ? `Provider: ${job.provider.name}`
+                                                            : `Client: ${job.client.name}`}
+                                                    </span>
+                                                    <span className={styles.metaDivider}>·</span>
+                                                    <span>Updated {new Date(job.updatedAt).toLocaleDateString()}</span>
+                                                </div>
+                                            </div>
                                             <span className={`${styles.statusBadge} ${statusConfig.class}`}>
                                                 <span aria-hidden="true">{statusConfig.icon}</span>
                                                 {statusConfig.label}
@@ -394,14 +483,12 @@ function MyJobsContent() {
 
                                         <div className={styles.jobMeta}>
                                             <span className={styles.metaItem}>
-                                                {isClient ? `Provider: ${job.provider.name}` : `Client: ${job.client.name}`}
-                                            </span>
-                                            <span className={styles.metaItem}>
                                                 <span className={styles.price}>{formatPrice(job.price, job.currency)}</span>
                                             </span>
                                             {job.service.category && (
                                                 <span className={styles.metaItem}>{job.service.category}</span>
                                             )}
+                                            {paymentBadge(job)}
                                         </div>
 
                                         <div className={styles.jobActions}>
@@ -447,38 +534,57 @@ function MyJobsContent() {
                                                 </button>
                                             )}
 
-                                            {/* Client: pay for an accepted or completed job */}
-                                            {(job.status === 'accepted' || job.status === 'completed') && isClient && (
-                                                <button
-                                                    className={styles.payBtn}
-                                                    onClick={() => handlePayNow(job._id)}
-                                                    disabled={busy}
-                                                >
-                                                    {payingJobId === job._id ? 'Opening payment…' : `Pay ${formatPrice(job.price, job.currency)}`}
-                                                </button>
-                                            )}
+                                            {/* Client: pay once accepted (or later) */}
+                                            {isClient &&
+                                                !isPaid &&
+                                                ['accepted', 'in_progress', 'completed'].includes(job.status) && (
+                                                    <button
+                                                        className={styles.payBtn}
+                                                        onClick={() => handlePayNow(job._id)}
+                                                        disabled={busy}
+                                                    >
+                                                        {payingJobId === job._id
+                                                            ? 'Opening payment…'
+                                                            : `Pay ${formatPrice(job.price, job.currency)}`}
+                                                    </button>
+                                                )}
 
-                                            {/* Either party: cancel a pending job (providers use Decline on requested jobs) */}
-                                            {['requested', 'accepted'].includes(job.status) && (isClient || isProvider) && !(job.status === 'requested' && isProvider) && (
-                                                <button
-                                                    className={styles.cancelBtn}
-                                                    onClick={() => handleStatusUpdate(job._id, 'cancelled', 'Job cancelled.')}
-                                                    disabled={busy}
-                                                >
-                                                    Cancel
-                                                </button>
-                                            )}
+                                            {/* Client or provider: cancel a pending job */}
+                                            {isProvider
+                                                ? ['accepted', 'in_progress'].includes(job.status) && (
+                                                    <button
+                                                        className={styles.cancelBtn}
+                                                        onClick={() => handleStatusUpdate(job._id, 'cancelled', 'Job cancelled.')}
+                                                        disabled={busy}
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                )
+                                                : isClient && ['requested', 'accepted', 'in_progress'].includes(job.status) && (
+                                                    <button
+                                                        className={styles.cancelBtn}
+                                                        onClick={() => handleStatusUpdate(job._id, 'cancelled', 'Job cancelled.')}
+                                                        disabled={busy}
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                )}
 
-                                            {/* Terminal states */}
-                                            {(job.status === 'paid' || job.status === 'completed') && isClient && !reviewedJobIds.has(job._id) && (
-                                                <JobReviewForm
-                                                    jobId={job._id}
-                                                    onDone={() => setReviewedJobIds(prev => new Set(prev).add(job._id))}
-                                                />
-                                            )}
-                                            {(job.status === 'paid' || job.status === 'completed') && isClient && reviewedJobIds.has(job._id) && (
-                                                <span className={styles.doneNote}>✓ Thanks for using SkillShare</span>
-                                            )}
+                                            {/* Client: review once the job is completed and paid */}
+                                            {isClient &&
+                                                isPaid &&
+                                                job.status === 'completed' &&
+                                                !reviewedJobIds.has(job._id) && (
+                                                    <JobReviewForm
+                                                        jobId={job._id}
+                                                        onDone={() => setReviewedJobIds(prev => new Set(prev).add(job._id))}
+                                                    />
+                                                )}
+                                            {isClient &&
+                                                job.status === 'completed' &&
+                                                reviewedJobIds.has(job._id) && (
+                                                    <span className={styles.doneNote}>✓ Thanks for using SkillShare</span>
+                                                )}
                                         </div>
                                     </article>
                                 );

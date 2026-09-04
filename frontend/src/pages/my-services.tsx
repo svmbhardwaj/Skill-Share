@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
+import Link from 'next/link';
 import { ProtectedRoute } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 import { ListSkeleton } from '../components/Skeleton';
@@ -154,12 +155,17 @@ function MyServicesContent() {
                                             Posted {new Date(service.createdAt).toLocaleDateString()}
                                         </span>
                                     </div>
-                                    <button
-                                        className={styles.removeBtn}
-                                        onClick={() => setRemoveTarget(service)}
-                                    >
-                                        Remove
-                                    </button>
+                                    <div className={styles.cardActions}>
+                                        <Link href={`/post-service?edit=${service._id}`} className={styles.editBtn}>
+                                            Edit
+                                        </Link>
+                                        <button
+                                            className={styles.removeBtn}
+                                            onClick={() => setRemoveTarget(service)}
+                                        >
+                                            Remove
+                                        </button>
+                                    </div>
                                 </article>
                             ))}
                         </div>

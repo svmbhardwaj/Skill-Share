@@ -164,6 +164,38 @@ exports.deleteService = async (req, res) => {
     }
 };
 
+// @desc    Update a service (owner only)
+// @route   PUT /api/services/:id
+// @access  Private (Owner)
+exports.updateService = async (req, res) => {
+    try {
+        const service = await Service.findById(req.params.id);
+
+        if (!service || service.isActive === false) {
+            return res.status(404).json({ success: false, error: 'Service not found' });
+        }
+
+        // Ownership check
+        if (service.provider.toString() !== req.user.id.toString()) {
+            return res.status(403).json({ success: false, error: 'Not authorized to edit this service' });
+        }
+
+        const { title, description, category, price, contactInfo } = req.body;
+        if (title !== undefined) service.title = title;
+        if (description !== undefined) service.description = description;
+        if (category !== undefined) service.category = category;
+        if (price !== undefined) service.price = price;
+        if (contactInfo !== undefined) service.contactInfo = contactInfo;
+
+        await service.save();
+
+        res.status(200).json({ success: true, data: service });
+    } catch (error) {
+        console.error('Update Service Error:', error);
+        res.status(400).json({ success: false, error: error.message });
+    }
+};
+
 // @desc    Get a single service by ID
 // @route   GET /api/services/:id
 // @access  Public

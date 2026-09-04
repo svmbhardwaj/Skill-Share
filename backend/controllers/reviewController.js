@@ -33,9 +33,12 @@ exports.createReview = async (req, res) => {
             return res.status(403).json({ success: false, error: 'Only the client can review this job' });
         }
 
-        // Job must be completed (paid)
-        if (job.status !== 'paid' && job.status !== 'completed') {
-            return res.status(400).json({ success: false, error: 'Can only review completed/paid jobs' });
+        // Job must be completed AND paid before the client can review it
+        if (job.status !== 'completed' || job.paymentStatus !== 'paid') {
+            return res.status(400).json({
+                success: false,
+                error: 'Can only review a completed job after it has been paid',
+            });
         }
 
         // Check for existing review

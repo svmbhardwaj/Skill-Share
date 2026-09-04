@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import api, { ApiError } from '../lib/api';
 import { CardSkeleton } from '../components/Skeleton';
 import styles from '../styles/Browse.module.css';
@@ -13,6 +14,7 @@ interface Service {
     price: number;
     currency?: string;
     imageUrl: string;
+    createdAt?: string;
     provider: {
         name: string;
         verified: boolean;
@@ -27,6 +29,7 @@ interface Service {
 }
 
 const CATEGORIES = ['Education', 'Repair', 'Health & Fitness', 'Tech Help', 'Other'];
+type SortOrder = 'newest' | 'price-asc' | 'price-desc';
 
 const formatPrice = (price: number, currency?: string) => {
     return new Intl.NumberFormat('en-IN', {
@@ -51,13 +54,24 @@ const distanceKm = (lat1: number, lon1: number, lat2: number, lon2: number) => {
 };
 
 export default function BrowseServices() {
+    const router = useRouter();
     const [services, setServices] = useState<Service[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [search, setSearch] = useState('');
     const [category, setCategory] = useState('All');
+    const [sort, setSort] = useState<SortOrder>('newest');
     // null = no coordinates (showing all services); set = browsing nearby
     const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
+
+    // Support deep links such as /browse?category=Repair (e.g. from the homepage)
+    useEffect(() => {
+        if (!router.isReady) return;
+        const c = router.query.category;
+        if (typeof c === 'string' && CATEGORIES.includes(c)) {
+            setCategory(c);
+        }
+    }, [router.isReady, router.query.category]);
 
     const fetchServices = async (lat?: number, lon?: number) => {
         setLoading(true);
@@ -126,6 +140,18 @@ export default function BrowseServices() {
             return matchesCategory && matchesSearch;
         });
     }, [services, search, category]);
+
+    const sortedServices = useMemo(() => {
+        const list = [...filteredServices];
+        if (sort === 'price-asc') {
+            list.sort((a, b) => a.price - b.price);
+        } else if (sort === 'price-desc') {
+            list.sort((a, b) => b.price - a.price);
+        } else {
+            list.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+        }
+        return list;
+    }, [filteredServices, sort]);
 
     const renderError = () => (
         <div className={styles.stateBlock}>
@@ -224,6 +250,28 @@ export default function BrowseServices() {
                                 </button>
                             ))}
                         </div>
+
+                        {/* Results toolbar */}
+                        {!loading && !error && services.length > 0 && (
+                            <div className={styles.toolbar}>
+                                <span className={styles.resultCount}>
+                                    {filteredServices.length} service{filteredServices.length === 1 ? '' : 's'}
+                                </span>
+                                <div className={styles.sortWrap}>
+                                    <label className={styles.sortLabel} htmlFor="sort-select">Sort</label>
+                                    <select
+                                        id="sort-select"
+                                        className={styles.sortSelect}
+                                        value={sort}
+                                        onChange={(e) => setSort(e.target.value as SortOrder)}
+                                    >
+                                        <option value="newest">Newest first</option>
+                                        <option value="price-asc">Price: low to high</option>
+                                        <option value="price-desc">Price: high to low</option>
+                                    </select>
+                                </div>
+                            </div>
+                        )}
                     </header>
 
                     {loading ? (
@@ -232,11 +280,11 @@ export default function BrowseServices() {
                         </div>
                     ) : error ? (
                         renderError()
-                    ) : filteredServices.length === 0 ? (
+                    ) : sortedServices.length === 0 ? (
                         renderEmpty()
                     ) : (
                         <div className={styles.grid}>
-                            {filteredServices.map(service => {
+                            {sortedServices.map(service => {
                                 const distance =
                                     userLocation &&
                                     service.location?.coordinates?.length === 2

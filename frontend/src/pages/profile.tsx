@@ -10,13 +10,14 @@ import styles from '../styles/Profile.module.css';
 interface Stats {
     servicesPosted: number;
     jobs: number;
+    completed: number;
 }
 
 function ProfileContent() {
     const router = useRouter();
     const { user, updateUser } = useAuth();
     const { showToast } = useToast();
-    const [stats, setStats] = useState<Stats>({ servicesPosted: 0, jobs: 0 });
+    const [stats, setStats] = useState<Stats>({ servicesPosted: 0, jobs: 0, completed: 0 });
     const [editMode, setEditMode] = useState(false);
     const [name, setName] = useState('');
     const [saving, setSaving] = useState(false);
@@ -33,14 +34,16 @@ function ProfileContent() {
 
         const loadStats = async () => {
             try {
-                const [servicesRes, jobsRes] = await Promise.all([
+                const [servicesRes, jobsRes, completedRes] = await Promise.all([
                     api.get<{ success: boolean; data: unknown[] }>('/api/services/my'),
                     api.get<{ success: boolean; pagination?: { total: number } }>('/api/jobs/myjobs?limit=1'),
+                    api.get<{ success: boolean; pagination?: { total: number } }>('/api/jobs/myjobs?status=completed&limit=1'),
                 ]);
                 if (cancelled) return;
                 setStats({
                     servicesPosted: servicesRes.success ? servicesRes.data.length : 0,
                     jobs: jobsRes.pagination?.total ?? 0,
+                    completed: completedRes.pagination?.total ?? 0,
                 });
             } catch {
                 // Non-fatal — profile still renders
@@ -177,6 +180,18 @@ function ProfileContent() {
                             <div className={styles.statInfo}>
                                 <span className={styles.statValue}>{stats.jobs}</span>
                                 <span className={styles.statLabel}>Jobs</span>
+                            </div>
+                        </div>
+
+                        <div className={styles.statCard}>
+                            <div className={`${styles.statIcon} ${styles.statIconAmber}`}>
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                                    <polyline points="20 6 9 17 4 12"/>
+                                </svg>
+                            </div>
+                            <div className={styles.statInfo}>
+                                <span className={styles.statValue}>{stats.completed}</span>
+                                <span className={styles.statLabel}>Completed Jobs</span>
                             </div>
                         </div>
                     </div>

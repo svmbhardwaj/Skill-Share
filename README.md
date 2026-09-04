@@ -41,7 +41,7 @@ The project is split into two applications:
 - 🔍 **Service discovery** — browse nearby services by category and search term; results show real provider, price, and distance data.
 - 📢 **Offer a service** — providers publish a service (title, description, category, price, contact info); listings are geo-linked to the provider's location.
 - 🤝 **Hiring flow** — a client requests a job on a service; the provider accepts, starts, and completes it; both sides can track the status.
-- 🔄 **Job state machine** — `requested → accepted → in_progress → completed`, with cancellation and payment transitions enforced server-side.
+- 🔄 **Job state machine** — `requested → accepted → in_progress → completed` with cancellation at defined points; money state (`paymentStatus`) is tracked separately and never drives the workflow.
 - 📧 **Email/password authentication** — bcrypt-hashed passwords with Zod validation and per-endpoint rate limiting.
 - 🌐 **Google Sign-In** — ID-token verification via Google's OAuth libraries (verified email required).
 - 🎟️ **Access + refresh tokens** — short-lived access token with silent refresh and `tokenVersion`-based revocation (logout-everywhere, password reset).
@@ -62,10 +62,10 @@ Browse services
     → View a service
     → Request service (create job)
     → Provider accepts
+    → Pay via Razorpay (test mode)         ← paymentStatus: pending → paid
     → Job starts (provider marks in_progress)
-    → Pay via Razorpay (test mode)
     → Provider completes the job
-    → Leave a review
+    → Leave a review                        ← only when completed + paid
 ```
 
 ### 🧑‍🔧 Provider
@@ -73,14 +73,14 @@ Browse services
 ```text
 Offer a service (publish)
     → Receive a job request
-    → Accept
+    → Accept / Decline
     → Start work (in_progress)
     → Complete the job
 ```
 
 ### 👀 Job status visibility
 
-Both parties see their jobs on the **My Jobs** page with the single next action available to them (accept / start / complete / pay / cancel), depending on their role and the job state.
+Both parties see their jobs on the **My Jobs** page, switchable between **All / Buying / Selling**, with the single next action available to them (accept / decline / start / complete / pay / cancel / review), depending on their role, the job state, and the payment state.
 
 ---
 
@@ -212,12 +212,14 @@ Key fields: `title`, `description`, `category` (`Education`, `Repair`, `Health &
 ### 🧾 Job
 A hiring request between a **client** (who requests) and a **provider** (who owns the service). A Job snapshots `price`/`currency` from the service at hire time and keeps two independent fields:
 - `status` — the workflow state machine (below), and
-- `paymentStatus` — `pending` | `succeeded` | `failed` | `refunded`.
+- `paymentStatus` — `pending` | `paid` | `failed` | `refunded`.
+
+A job is never auto-transitioned by payment — paying only moves `paymentStatus`; the provider still drives `in_progress → completed`.
 
 It also records `razorpayOrderId` and a `statusHistory` audit trail (from/to/changedBy/changedAt) for every transition.
 
 ### 💳 Payment
-Records each Razorpay order created for a Job: `orderId` (unique), `paymentId` and `signature` (stored only after successful server-side verification), `amount` in the smallest currency unit (paise for INR, computed server-side from the Job), and a `status` (`created` → `succeeded` | `failed` | `cancelled`).
+Records each Razorpay order created for a Job: `orderId` (unique), `paymentId` and `signature` (stored only after successful server-side verification, alongside `signatureVerified: true`), `amount` in the smallest currency unit (paise for INR, computed server-side from the Job), `providerName` (`razorpay`), and a `status` (`created` → `succeeded` | `failed` | `cancelled`).
 
 ### ⭐ Review
 A rating (1–5) and optional comment left by the **client** about the **provider** for a completed/paid job. One review per job per reviewer (unique index); each review refreshes the service's `averageRating` and `totalReviews`.
@@ -229,7 +231,7 @@ A rating (1–5) and optional comment left by the **client** about the **provide
 The workflow `status` is a state machine enforced in the Job model and guarded by role checks in the controller:
 
 ```text
-requested ──→ accepted ──→ in_progress ──→ completed ──→ paid
+requested ──→ accepted ──→ in_progress ──→ completed
     │            │              │
     └─────┬──────┴──────────────┘
           ▼
@@ -237,15 +239,14 @@ requested ──→ accepted ──→ in_progress ──→ completed ──→
 ```
 
 - `requested` → **client** requested the service. Provider may **accept** or either party may **cancel**.
-- `accepted` → provider agreed; provider may **start work** (`in_progress`) or either party may **cancel**.
+- `accepted` → provider agreed; provider may **start work** (`in_progress`) or either party may **cancel**. The client may **pay** from this point on.
 - `in_progress` → provider marks the job **completed**; either party may **cancel**.
-- `completed` → work is done.
-- `paid` → reached **only** through successful server-verified payment (never via the status endpoint).
-- `cancelled` and `paid` are terminal states.
+- `completed` → terminal workflow state (the client may still pay, and may **review** once payment is confirmed).
+- `cancelled` → terminal state.
 
 Role rules: only the **client** creates jobs; nobody can hire themselves; duplicate active requests for the same client + service are rejected; only the **provider** can accept/start/complete; only the job's client or provider can change status; invalid transitions are rejected; a soft-deleted service cannot be hired.
 
-> 💡 **Payment is deliberately separate from job status.** A job can be `completed` before it is `paid` (pay-on-completion), and `paymentStatus` tracks the money side independently. Manual status updates can never set `paid`.
+> 💡 **Money state is deliberately separate from job status.** Payment never moves the workflow state machine — it only flips `paymentStatus` (`pending` → `paid` after server-side Razorpay verification, `failed`/`refunded` otherwise). The status endpoint can never change `paymentStatus`.
 
 ---
 
@@ -254,14 +255,14 @@ Role rules: only the **client** creates jobs; nobody can hire themselves; duplic
 The app integrates **Razorpay in Test Mode only** — no live charge is possible with test keys.
 
 1. 🖱️ The client opens a payable Job (accepted or completed) on **My Jobs** and clicks **Pay**.
-2. 📨 The frontend calls `POST /api/payment/create-order` with only the `jobId`.
+2. 📨 The frontend calls `POST /api/payments/create-order` with only the `jobId`.
 3. 🛡️ The backend loads the Job from MongoDB, verifies the caller is the job's client, confirms the job has not been paid and is eligible to move to `paid`, and **derives the amount server-side** (`price × 100` → paise, INR). It never trusts an amount from the client.
 4. 📝 A Razorpay order is created (`razorpay.orders.create`), the order ID is stored on the Job and in a `Payment` record, and the response (order id, amount, currency, public key id) goes back to the client.
 5. 🧾 The frontend opens **Razorpay Checkout** with the order id and the public key.
-6. 🔁 After the checkout, the frontend sends `{ orderId, paymentId, signature }` to `POST /api/payment/verify`.
+6. 🔁 After the checkout, the frontend sends `{ orderId, paymentId, signature }` to `POST /api/payments/verify`.
 7. 🔐 The backend recomputes the expected HMAC-SHA256 signature over `orderId|paymentId` with `RAZORPAY_KEY_SECRET` and compares it with a timing-safe comparison. Verification happens **on the server only**.
-8. ✅ On success the `Payment` is marked `succeeded`, the Job's `paymentStatus` becomes `succeeded`, and the job transitions through the state machine to `paid` (only if `paid` is a legal transition). The flow is idempotent — an already-paid job returns success without reprocessing.
-9. ❌ Cancelled/failed checkouts are reported to `POST /api/payment/status`; the server reconciles with Razorpay's authoritative order status (`CREATED`/`ATTEMPTED`/`PAID`) before recording `failed`/`cancelled`, and never downgrades a succeeded payment.
+8. ✅ On success the `Payment` record is marked `succeeded` (with the signature stored and `signatureVerified: true`), and the Job's `paymentStatus` becomes `paid`. The workflow state is **never** changed by payment. The flow is idempotent — an already-paid job returns success without reprocessing.
+9. ❌ Cancelled/failed checkouts are reported to `POST /api/payments/status`; the server reconciles with Razorpay's authoritative order status (`CREATED`/`ATTEMPTED`/`PAID`) before recording `failed`/`cancelled`, and never downgrades a succeeded payment.
 
 > 🧪 **Test mode:** keys look like `rzp_test_...` and no real money moves. Going live requires Razorpay live credentials and is not configured in this codebase.
 
@@ -317,6 +318,7 @@ All routes are mounted under `/api`. 🔒 = requires `Authorization: Bearer <acc
 | GET | `/api/services/my` | 🔒 | Current user's services |
 | GET | `/api/services/:id` | — | Single active service |
 | POST | `/api/services` | 🔒 | Publish a service |
+| PUT | `/api/services/:id` | 🔒 | Update own service (owner only) |
 | DELETE | `/api/services/:id` | 🔒 | Soft-delete own service (`isActive: false`) |
 
 ### Jobs — `/api/jobs`
@@ -325,21 +327,21 @@ All routes are mounted under `/api`. 🔒 = requires `Authorization: Bearer <acc
 |---|---|---|---|
 | POST | `/api/jobs/hire` | 🔒 | Client requests a job on a service |
 | GET | `/api/jobs/myjobs?page=&limit=&status=` | 🔒 | Jobs where the user is client or provider |
-| PATCH | `/api/jobs/:id/status` | 🔒 | Transition job status (state-machine enforced; `paid` rejected) |
+| PATCH | `/api/jobs/:id/status` | 🔒 | Transition job status (state-machine enforced; can never touch `paymentStatus`) |
 
-### Payments — `/api/payment`
+### Payments — `/api/payments`
 
 | Method | Route | Auth | Purpose |
 |---|---|---|---|
-| POST | `/api/payment/create-order` | 🔒 | Create a Razorpay order (client only, amount from DB) |
-| POST | `/api/payment/verify` | 🔒 | Verify signature server-side, mark paid |
-| POST | `/api/payment/status` | 🔒 | Record cancelled/failed checkout (server-reconciled) |
+| POST | `/api/payments/create-order` | 🔒 | Create a Razorpay order (client only, amount derived from the DB) |
+| POST | `/api/payments/verify` | 🔒 | Verify HMAC signature server-side, set `paymentStatus: paid` |
+| POST | `/api/payments/status` | 🔒 | Record cancelled/failed checkout (server-reconciled) |
 
 ### Reviews — `/api/reviews`
 
 | Method | Route | Auth | Purpose |
 |---|---|---|---|
-| POST | `/api/reviews` | 🔒 | Client reviews a completed/paid job (once) |
+| POST | `/api/reviews` | 🔒 | Client reviews a job once it is `completed` and paid (once per job) |
 | GET | `/api/reviews/provider/:providerId` | — | Reviews + average for a provider |
 | GET | `/api/reviews/service/:serviceId` | — | Reviews + average for a service |
 
@@ -381,8 +383,9 @@ The server fails fast at startup if any of the five required variables is missin
 |---|---|---|
 | `NEXT_PUBLIC_BACKEND_API_URL` | ✅ | Backend base URL (default `http://localhost:5000`) |
 | `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | for Google login | Google OAuth client ID (same as backend) |
+| `NEXT_PUBLIC_RAZORPAY_KEY_ID` | optional | Razorpay **test mode** public key id (`rzp_test_...`); falls back to the public key id returned by the backend at checkout |
 
-Only public values go to the frontend. No Razorpay variable is needed there — the backend returns the Razorpay **public key id** in the `create-order` response, and `RAZORPAY_KEY_SECRET` never leaves the backend.
+Only public values go to the frontend; `RAZORPAY_KEY_SECRET` never leaves the backend. If `NEXT_PUBLIC_RAZORPAY_KEY_ID` is unset, the frontend uses the Razorpay public key id that the backend returns in the `create-order` response.
 
 ---
 
@@ -438,7 +441,7 @@ Gmail SMTP requires an [app password](https://support.google.com/accounts/answer
 ### 💳 Razorpay test mode setup
 
 1. Create a free Razorpay account and open the **Test Mode** keys from the dashboard.
-2. Put `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` in `backend/.env`. The frontend receives the Razorpay public key id from the backend at checkout time, so **no Razorpay variable is needed in `frontend/.env.local`**.
+2. Put `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` in `backend/.env`. Optionally also set `NEXT_PUBLIC_RAZORPAY_KEY_ID` (same public key id) in `frontend/.env.local` — when it is unset, the frontend uses the public key id returned by the backend at checkout time.
 3. In test mode, Razorpay Checkout shows a success/failure simulator — use the provided test card details to complete a payment. No real money moves.
 
 ---

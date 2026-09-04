@@ -19,6 +19,18 @@ const paymentSchema = new mongoose.Schema({
         ref: 'User',
         required: true,
     },
+    // The provider receiving the payment (denormalized from the Job for queries)
+    provider: {
+        type: mongoose.Schema.ObjectId,
+        ref: 'User',
+        required: true,
+    },
+    // Payment provider name — Razorpay only in this implementation
+    providerName: {
+        type: String,
+        default: 'razorpay',
+        enum: ['razorpay'],
+    },
     // Razorpay order ID (created server-side, never from the client)
     orderId: {
         type: String,
@@ -33,6 +45,11 @@ const paymentSchema = new mongoose.Schema({
     // Razorpay signature — set only after server-side signature verification
     signature: {
         type: String,
+    },
+    // True only after the server verified the HMAC signature over orderId|paymentId
+    signatureVerified: {
+        type: Boolean,
+        default: false,
     },
     // Amount in the currency's smallest unit (paise for INR), derived from the Job server-side
     amount: {

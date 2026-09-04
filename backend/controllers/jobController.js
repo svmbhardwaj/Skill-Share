@@ -84,13 +84,9 @@ exports.updateJobStatus = async (req, res) => {
             return res.status(403).json({ success: false, error: 'Not authorized to update this job' });
         }
 
-        // 'paid' can ONLY be reached through the payment flow (server-side signature
-        // verification) — never through the manual status endpoint
-        if (newStatus === 'paid') {
-            return res.status(400).json({ success: false, error: 'A job can only be marked paid after a successful payment' });
-        }
-
-        // Permission checks for specific transitions
+        // Money state (paymentStatus) is NEVER reachable through this endpoint —
+        // it can only change after server-side Razorpay signature verification.
+        // Permission checks for specific transitions:
         if (newStatus === 'accepted' && !isProvider) {
             return res.status(403).json({ success: false, error: 'Only the provider can accept a job' });
         }

@@ -176,7 +176,7 @@ app.use('/api/', apiLimiter);
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/services', require('./routes/serviceRoutes'));
 app.use('/api/jobs', require('./routes/jobRoutes'));
-app.use('/api/payment', require('./routes/paymentRoutes'));
+app.use('/api/payments', require('./routes/paymentRoutes'));
 app.use('/api/reviews', require('./routes/reviewRoutes'));
 
 // Health check endpoint for deployment platforms

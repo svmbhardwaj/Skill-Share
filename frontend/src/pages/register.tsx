@@ -127,7 +127,7 @@ export default function Register() {
             <main className={styles.main}>
                 <div className={styles.logo}>
                     <Link href="/">
-                        <span className={styles.white}>Skill</span><span className={styles.blue}>Share</span><span className={styles.gold}>Local</span>
+                        <span className={styles.white}>Skill</span><span className={styles.blue}>Share</span>
                     </Link>
                 </div>
                 <div className={styles.formCard}>

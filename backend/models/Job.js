@@ -19,7 +19,7 @@ const jobSchema = new mongoose.Schema({
     status: {
         type: String,
         required: true,
-        enum: ['requested', 'accepted', 'in_progress', 'completed', 'cancelled', 'paid'],
+        enum: ['requested', 'accepted', 'in_progress', 'completed', 'cancelled'],
         default: 'requested',
     },
     scheduledDateTime: {
@@ -35,14 +35,15 @@ const jobSchema = new mongoose.Schema({
         default: 'INR',
         enum: ['INR'],
     },
-    // Razorpay order ID (created server-side; payment status is separate
-    // from the job workflow `status`)
+    // Razorpay order ID (created server-side). Money state is tracked
+    // separately from the workflow `status` — payment never drives the
+    // job lifecycle state machine.
     razorpayOrderId: {
         type: String,
     },
     paymentStatus: {
         type: String,
-        enum: ['pending', 'succeeded', 'failed', 'refunded'],
+        enum: ['pending', 'paid', 'failed', 'refunded'],
         default: 'pending',
     },
     // State machine: track transitions for audit trail
@@ -70,10 +71,9 @@ jobSchema.index({ createdAt: -1 });
 // ============================================================
 const VALID_TRANSITIONS = {
     requested:   ['accepted', 'cancelled'],
-    accepted:    ['in_progress', 'paid', 'cancelled'],
+    accepted:    ['in_progress', 'cancelled'],
     in_progress: ['completed', 'cancelled'],
-    completed:   ['paid'],
-    paid:        [], // terminal state
+    completed:   [], // terminal state
     cancelled:   [], // terminal state
 };
 

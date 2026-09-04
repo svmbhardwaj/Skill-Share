@@ -1,5 +1,5 @@
 const express = require('express');
-const { createService, getNearbyServices, getServiceById, getMyServices, deleteService } = require('../controllers/serviceController');
+const { createService, getNearbyServices, getServiceById, getMyServices, updateService, deleteService } = require('../controllers/serviceController');
 const { protect } = require('../middleware/authMiddleware');
 const { validate, createServiceSchema } = require('../middleware/validation');
 
@@ -14,9 +14,10 @@ router
     .get(getNearbyServices)
     .post(protect, validate(createServiceSchema), createService);
 
-// Route for getting/deleting a single service by its ID
+// Route for getting/updating/deleting a single service by its ID
 router.route('/:id')
     .get(getServiceById)
+    .put(protect, validate(createServiceSchema), updateService)
     .delete(protect, deleteService);
 
 module.exports = router;

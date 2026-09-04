@@ -18,7 +18,7 @@ const toSmallestUnit = (amount, currency) => {
 };
 
 // @desc    Create a Razorpay order for a job
-// @route   POST /api/payment/create-order
+// @route   POST /api/payments/create-order
 // @access  Private (Client)
 exports.createOrder = async (req, res) => {
     try {
@@ -36,11 +36,13 @@ exports.createOrder = async (req, res) => {
         }
 
         // Prevent duplicate payment for an already-paid job
-        if (job.paymentStatus === 'succeeded' || job.status === 'paid') {
+        if (job.paymentStatus === 'paid') {
             return res.status(400).json({ success: false, error: 'This job has already been paid for' });
         }
 
-        if (!job.canTransitionTo('paid')) {
+        // A job can be paid once it has been accepted (or later, once completed)
+        const payableStatuses = ['accepted', 'in_progress', 'completed'];
+        if (!payableStatuses.includes(job.status)) {
             return res.status(400).json({
                 success: false,
                 error: `Cannot pay for a job in '${job.status}' status`,
@@ -83,6 +85,8 @@ exports.createOrder = async (req, res) => {
         await Payment.create({
             job: job._id,
             client: req.user.id,
+            provider: job.provider,
+            providerName: 'razorpay',
             orderId: order.id,
             amount,
             currency,
@@ -102,8 +106,8 @@ exports.createOrder = async (req, res) => {
     }
 };
 
-// @desc    Verify Razorpay payment signature and mark the job as paid
-// @route   POST /api/payment/verify
+// @desc    Verify Razorpay payment signature and mark the job's paymentStatus as paid
+// @route   POST /api/payments/verify
 // @access  Private (Client)
 exports.verifyPayment = async (req, res) => {
     try {
@@ -125,7 +129,7 @@ exports.verifyPayment = async (req, res) => {
         }
 
         // Idempotent — already verified
-        if (payment.status === 'succeeded' || job.paymentStatus === 'succeeded') {
+        if (payment.status === 'succeeded' || job.paymentStatus === 'paid') {
             return res.status(200).json({ success: true, alreadyPaid: true });
         }
 
@@ -148,29 +152,28 @@ exports.verifyPayment = async (req, res) => {
             return res.status(400).json({ success: false, error: 'Payment signature verification failed' });
         }
 
-        // Mark payment as succeeded
+        // Mark the Payment record as succeeded (signature was verified server-side)
         payment.paymentId = paymentId;
         payment.signature = signature;
+        payment.signatureVerified = true;
         payment.status = 'succeeded';
         await payment.save();
 
-        // Keep the job workflow state machine — only flip paymentStatus + transition if allowed
-        if (job.paymentStatus !== 'succeeded' && job.status !== 'paid') {
-            job.paymentStatus = 'succeeded';
-            if (job.canTransitionTo('paid')) {
-                job.transitionTo('paid', req.user.id);
-            }
+        // Money state lives on the Job's paymentStatus — the workflow state
+        // machine (status) is intentionally left untouched.
+        if (job.paymentStatus !== 'paid') {
+            job.paymentStatus = 'paid';
             await job.save();
         }
 
         // Notify both parties in real-time
         if (req.app.get('io')) {
-            const update = { jobId: job._id, status: job.status, paymentStatus: 'succeeded' };
+            const update = { jobId: job._id, status: job.status, paymentStatus: 'paid' };
             req.app.get('io').to(`user_${job.client}`).emit('jobUpdate', update);
             req.app.get('io').to(`user_${job.provider}`).emit('jobUpdate', update);
         }
 
-        res.status(200).json({ success: true, paymentStatus: 'succeeded', jobStatus: job.status });
+        res.status(200).json({ success: true, paymentStatus: 'paid', jobStatus: job.status });
     } catch (error) {
         console.error('Razorpay Verify Error:', error);
         res.status(500).json({ success: false, error: 'Failed to verify payment' });
@@ -178,7 +181,7 @@ exports.verifyPayment = async (req, res) => {
 };
 
 // @desc    Handle cancelled / failed payments (called from the checkout modal)
-// @route   POST /api/payment/status
+// @route   POST /api/payments/status
 // @access  Private (Client)
 // The client only reports what happened in the checkout; the server
 // reconciles with Razorpay's authoritative order status before recording it.

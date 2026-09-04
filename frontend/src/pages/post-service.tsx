@@ -1,16 +1,30 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
-import { ProtectedRoute } from '../context/AuthContext';
+import { ProtectedRoute, useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 import api, { ApiError } from '../lib/api';
 import styles from '../styles/PostService.module.css';
 
 const CATEGORIES = ['Education', 'Repair', 'Health & Fitness', 'Tech Help', 'Other'];
 
+interface ServiceToEdit {
+    _id: string;
+    title: string;
+    description: string;
+    category: string;
+    price: number;
+    contactInfo: string;
+    provider: { _id: string; name: string };
+}
+
 function PostServiceContent() {
     const router = useRouter();
+    const { user } = useAuth();
     const { showToast } = useToast();
+
+    const editId = typeof router.query.edit === 'string' ? router.query.edit : null;
+    const isEditing = editId !== null;
 
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
@@ -19,6 +33,49 @@ function PostServiceContent() {
     const [contactInfo, setContactInfo] = useState('');
     const [error, setError] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    const [loadingEdit, setLoadingEdit] = useState(isEditing);
+
+    // Load the service being edited and confirm ownership
+    useEffect(() => {
+        if (!editId) return;
+
+        const loadService = async () => {
+            setLoadingEdit(true);
+            try {
+                const data = await api.get<{
+                    success: boolean;
+                    data?: ServiceToEdit;
+                    error?: string;
+                }>(`/api/services/${editId}`);
+
+                if (!data.success || !data.data) {
+                    setError(data.error || 'Could not load this service.');
+                    return;
+                }
+
+                if (user && String(data.data.provider._id) !== String(user.id)) {
+                    setError('You can only edit your own services.');
+                    return;
+                }
+
+                setTitle(data.data.title);
+                setDescription(data.data.description);
+                setCategory(data.data.category);
+                setPrice(String(data.data.price));
+                setContactInfo(data.data.contactInfo);
+            } catch (err) {
+                if (err instanceof ApiError) {
+                    setError(err.message);
+                } else {
+                    setError('Could not load this service.');
+                }
+            } finally {
+                setLoadingEdit(false);
+            }
+        };
+
+        loadService();
+    }, [editId, user]);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -35,23 +92,40 @@ function PostServiceContent() {
 
         setSubmitting(true);
         try {
-            const data = await api.post<{
-                success: boolean;
-                data: unknown;
-                error?: string;
-            }>('/api/services', {
+            const body = {
                 title,
                 description,
                 category,
                 price: Number(price),
                 contactInfo,
-            });
+            };
 
-            if (data.success) {
-                showToast('Service published!', 'success');
-                router.push('/my-services');
+            if (isEditing) {
+                const data = await api.put<{
+                    success: boolean;
+                    data: unknown;
+                    error?: string;
+                }>(`/api/services/${editId}`, body);
+
+                if (data.success) {
+                    showToast('Service updated!', 'success');
+                    router.push('/my-services');
+                } else {
+                    setError(data.error || 'Failed to update service.');
+                }
             } else {
-                setError(data.error || 'Failed to post service.');
+                const data = await api.post<{
+                    success: boolean;
+                    data: unknown;
+                    error?: string;
+                }>('/api/services', body);
+
+                if (data.success) {
+                    showToast('Service published!', 'success');
+                    router.push('/my-services');
+                } else {
+                    setError(data.error || 'Failed to post service.');
+                }
             }
         } catch (err) {
             if (err instanceof ApiError) {
@@ -64,18 +138,37 @@ function PostServiceContent() {
         }
     };
 
+    if (loadingEdit) {
+        return (
+            <main className={styles.main}>
+                <div className={styles.header}>
+                    <h1 className={styles.heading}>Edit Service</h1>
+                </div>
+                <div className={styles.form} aria-busy="true">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                        <div key={i} className={styles.skeletonLine} style={{ height: 44 }} />
+                    ))}
+                </div>
+            </main>
+        );
+    }
+
     return (
         <>
             <Head>
-                <title>Offer a Service | SkillShare</title>
+                <title>{isEditing ? 'Edit Service | SkillShare' : 'Offer a Service | SkillShare'}</title>
                 <meta name="description" content="Share your skills with your local community" />
             </Head>
 
             <main className={styles.main}>
                 <div className={styles.header}>
-                    <h1 className={styles.heading}>Offer a Service</h1>
+                    <h1 className={styles.heading}>
+                        {isEditing ? 'Edit Service' : 'Offer a Service'}
+                    </h1>
                     <p className={styles.subtitle}>
-                        Tell your neighbors what you can help with. Your service appears in local search results.
+                        {isEditing
+                            ? 'Update the details below — existing requests for this service stay valid.'
+                            : 'Tell your neighbors what you can help with. Your service appears in local search results.'}
                     </p>
                 </div>
 
@@ -92,6 +185,7 @@ function PostServiceContent() {
                             maxLength={100}
                             required
                         />
+                        <span className={styles.charCount}>{title.length}/100</span>
                     </div>
 
                     <div className={styles.field}>
@@ -105,6 +199,7 @@ function PostServiceContent() {
                             maxLength={1000}
                             required
                         />
+                        <span className={styles.charCount}>{description.length}/1000</span>
                     </div>
 
                     <div className={styles.field}>
@@ -164,9 +259,22 @@ function PostServiceContent() {
                         adding a location when you register.
                     </p>
 
-                    <button type="submit" className={styles.button} disabled={submitting}>
-                        {submitting ? 'Publishing…' : 'Publish Service'}
-                    </button>
+                    <div className={styles.formActions}>
+                        <button type="submit" className={styles.button} disabled={submitting}>
+                            {submitting
+                                ? isEditing ? 'Saving…' : 'Publishing…'
+                                : isEditing ? 'Save Changes' : 'Publish Service'}
+                        </button>
+                        {isEditing && (
+                            <button
+                                type="button"
+                                className={styles.cancelEditBtn}
+                                onClick={() => router.push('/my-services')}
+                            >
+                                Cancel
+                            </button>
+                        )}
+                    </div>
                 </form>
             </main>
         </>

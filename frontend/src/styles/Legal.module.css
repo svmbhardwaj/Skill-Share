@@ -1,62 +1,66 @@
+/* ============================================================
+   LEGAL PAGES — light warm theme
+   ============================================================ */
+
 .main {
-    min-height: 100vh;
-    padding: 2rem;
-    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+    min-height: calc(100vh - var(--nav-height));
+    background: var(--bg);
+    padding: 3rem 1.25rem 5rem;
 }
 
 .container {
-    max-width: 800px;
+    max-width: 780px;
     margin: 0 auto;
-    background: rgba(30, 30, 30, 0.8);
-    border-radius: 20px;
-    padding: 3rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: 2.75rem;
 }
 
 .title {
-    font-size: 2.5rem;
-    font-weight: 800;
+    font-family: var(--font-display);
+    font-size: clamp(1.9rem, 4vw, 2.5rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--ink);
     margin-bottom: 0.5rem;
-    background: linear-gradient(135deg, #fff 0%, #3b82f6 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
 }
 
 .lastUpdated {
-    color: #888;
+    color: var(--faint);
     font-size: 0.9rem;
     margin-bottom: 2rem;
-    padding-bottom: 2rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 1.75rem;
+    border-bottom: 1px solid var(--line);
 }
 
 .section {
-    margin-bottom: 2rem;
+    margin-bottom: 2.1rem;
 }
 
 .section h2 {
-    font-size: 1.3rem;
-    font-weight: 700;
-    color: #3b82f6;
-    margin-bottom: 1rem;
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--ink);
+    margin-bottom: 0.9rem;
+    letter-spacing: -0.01em;
 }
 
 .section p {
-    color: #ccc;
+    color: var(--ink-soft);
     line-height: 1.8;
-    margin-bottom: 1rem;
+    margin-bottom: 0.9rem;
 }
 
 .section ul {
     list-style: none;
     padding-left: 0;
-    margin-bottom: 1rem;
+    margin-bottom: 0.9rem;
 }
 
 .section ul li {
-    color: #ccc;
+    color: var(--ink-soft);
     line-height: 1.8;
     padding-left: 1.5rem;
     position: relative;
@@ -65,42 +69,28 @@
 
 .section ul li::before {
     content: '•';
-    color: #3b82f6;
-    font-weight: bold;
+    color: var(--brand);
+    font-weight: 800;
     position: absolute;
     left: 0;
 }
 
 .section ul li strong {
-    color: #fff;
+    color: var(--ink);
 }
 
 .section a {
-    color: #3b82f6;
+    color: var(--brand);
     text-decoration: underline;
-    transition: color 0.3s ease;
+    text-underline-offset: 3px;
+    transition: color 0.15s ease;
 }
 
 .section a:hover {
-    color: #60a5fa;
+    color: var(--brand-strong);
 }
 
-/* Responsive */
 @media (max-width: 768px) {
-    .main {
-        padding: 1rem;
-    }
-
-    .container {
-        padding: 1.5rem;
-        border-radius: 15px;
-    }
-
-    .title {
-        font-size: 1.8rem;
-    }
-
-    .section h2 {
-        font-size: 1.1rem;
-    }
+    .main { padding: 2rem 1rem 4rem; }
+    .container { padding: 1.75rem; }
 }
