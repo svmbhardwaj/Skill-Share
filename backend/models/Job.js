@@ -29,11 +29,11 @@ const jobSchema = new mongoose.Schema({
         type: Number,
         required: true,
     },
-    // Currency for the payment (default INR for India)
+    // Currency for the payment — INR only (Razorpay payments are INR-denominated)
     currency: {
         type: String,
         default: 'INR',
-        enum: ['INR', 'USD', 'EUR'],
+        enum: ['INR'],
     },
     // Razorpay order ID (created server-side; payment status is separate
     // from the job workflow `status`)

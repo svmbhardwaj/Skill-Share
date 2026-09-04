@@ -48,7 +48,7 @@ The project is split into two applications:
 - 🔑 **Password reset** — time-limited reset link sent by email.
 - 💳 **Payments (Razorpay Test Mode)** — orders are created and verified on the server; the client never supplies an amount and signatures are checked server-side.
 - ⭐ **Reviews & ratings** — the client of a completed/paid job can rate it once; the service's average rating updates automatically.
-- 📍 **Location-aware search** — MongoDB geospatial queries return services near the user; location is *optional* during registration.
+- 📍 **Location-aware search** — MongoDB geospatial queries return services near the user; location is *optional* during registration, and browsing without location shows all services rather than a hard-coded default city.
 - ⚡ **Real-time sockets** — Socket.io server with JWT-authenticated connections; users can only join their own room.
 
 ---
@@ -207,7 +207,7 @@ Key fields: `name`, `email` (unique), hashed `password` (absent for pure Google 
 
 ### 📦 Service
 A marketplace listing created by a **provider**.
-Key fields: `title`, `description`, `category` (`Education`, `Repair`, `Health & Fitness`, `Tech Help`, `Other`), `price` (INR), `currency`, `contactInfo`, `provider` (ref → User), optional GeoJSON `location` + `address`, denormalized `averageRating` / `totalReviews`, and `isActive` — a soft-delete flag. Removing a service sets `isActive: false`; jobs already referencing it remain valid.
+Key fields: `title`, `description`, `category` (`Education`, `Repair`, `Health & Fitness`, `Tech Help`, `Other`), `price` (INR), `currency` (always `INR`), `contactInfo`, `provider` (ref → User), optional GeoJSON `location` + `address`, denormalized `averageRating` / `totalReviews`, and `isActive` — a soft-delete flag. Removing a service sets `isActive: false`; jobs already referencing it remain valid.
 
 ### 🧾 Job
 A hiring request between a **client** (who requests) and a **provider** (who owns the service). A Job snapshots `price`/`currency` from the service at hire time and keeps two independent fields:
@@ -285,7 +285,7 @@ The app integrates **Razorpay in Test Mode only** — no live charge is possible
 
 - 📱 **Registration** asks the browser for geolocation, but location is **optional** — users can create an account without granting permission.
 - 📌 Providers store a GeoJSON point when they register with a location; **service creation copies the provider's location** onto the Service so listings are geo-searchable.
-- 🗺️ **Browse** requests the browser's location, then calls `GET /api/services?lat=...&lon=...&radius=...`; the backend runs a MongoDB `$geoWithin` query over providers and returns their active services. If geolocation is unavailable or denied, the frontend falls back to a default location (Delhi, India).
+- 🗺️ **Browse** requests the browser's location, then calls `GET /api/services?lat=...&lon=...&radius=...`; the backend runs a MongoDB `$geoWithin` query over providers and returns their active services. If geolocation is unavailable or denied, the frontend shows **all active services** (with a “Use my location” retry) instead of assuming a hard-coded default location.
 - 📏 Distances shown on service cards are computed client-side (haversine) from the service's real coordinates.
 - ⚠️ Geolocation/permission changes after registration are not currently re-synced (see [Limitations](#-known-limitations)).
 
@@ -313,7 +313,7 @@ All routes are mounted under `/api`. 🔒 = requires `Authorization: Bearer <acc
 
 | Method | Route | Auth | Purpose |
 |---|---|---|---|
-| GET | `/api/services?lat=&lon=&radius=` | — | Nearby active services (km radius) |
+| GET | `/api/services?lat=&lon=&radius=` | — | Active services — filtered to a km radius when `lat`/`lon`/`radius` are given, otherwise all |
 | GET | `/api/services/my` | 🔒 | Current user's services |
 | GET | `/api/services/:id` | — | Single active service |
 | POST | `/api/services` | 🔒 | Publish a service |
@@ -381,9 +381,8 @@ The server fails fast at startup if any of the five required variables is missin
 |---|---|---|
 | `NEXT_PUBLIC_BACKEND_API_URL` | ✅ | Backend base URL (default `http://localhost:5000`) |
 | `NEXT_PUBLIC_GOOGLE_CLIENT_ID` | for Google login | Google OAuth client ID (same as backend) |
-| `NEXT_PUBLIC_RAZORPAY_KEY_ID` | for payments | Razorpay **test mode** key id (`rzp_test_...`) |
 
-Only public values go to the frontend; `RAZORPAY_KEY_SECRET` never leaves the backend.
+Only public values go to the frontend. No Razorpay variable is needed there — the backend returns the Razorpay **public key id** in the `create-order` response, and `RAZORPAY_KEY_SECRET` never leaves the backend.
 
 ---
 
@@ -422,7 +421,7 @@ cd frontend
 npm install
 # create frontend/.env.local using the placeholder values in the
 # "Environment Variables → Frontend" table above (at minimum
-# NEXT_PUBLIC_BACKEND_API_URL, plus the Google / Razorpay public keys you use)
+# NEXT_PUBLIC_BACKEND_API_URL, plus NEXT_PUBLIC_GOOGLE_CLIENT_ID for Google login)
 npm run dev                  # http://localhost:3000
 ```
 
@@ -439,7 +438,7 @@ Gmail SMTP requires an [app password](https://support.google.com/accounts/answer
 ### 💳 Razorpay test mode setup
 
 1. Create a free Razorpay account and open the **Test Mode** keys from the dashboard.
-2. Put `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` in `backend/.env`, and `RAZORPAY_KEY_ID` (public key) in `frontend/.env.local`.
+2. Put `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` in `backend/.env`. The frontend receives the Razorpay public key id from the backend at checkout time, so **no Razorpay variable is needed in `frontend/.env.local`**.
 3. In test mode, Razorpay Checkout shows a success/failure simulator — use the provided test card details to complete a payment. No real money moves.
 
 ---
@@ -496,6 +495,7 @@ npm run lint     # ESLint
 - 📡 **Real-time events are server-side only** — the backend emits Socket.io events, but the current frontend does not ship a socket client, so pages reflect updates on load/refresh rather than via live push.
 - ⭐ **Ratings appear only after real reviews exist** — service cards show an average rating only once the service has at least one review; until then no rating is displayed.
 - 📍 **Profile location is set at registration** — moving to a new area isn't re-synced through the UI, so geo-search reflects the location stored at sign-up.
+- 📄 **My Jobs lists the most recent 20 jobs** without pagination controls yet — the API supports `?page=`/`?limit=` for future paging.
 - 📧 **Password reset email needs a Gmail app password** — without `EMAIL_USER`/`EMAIL_PASS`, the forgot-password endpoint returns an error.
 - 🗃️ **Tokens are stored in `localStorage`** — a pragmatic choice that keeps the client simple but is XSS-readable (the server stays authoritative regardless).
 

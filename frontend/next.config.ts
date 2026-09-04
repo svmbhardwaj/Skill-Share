@@ -22,13 +22,6 @@ const nextConfig: NextConfig = {
     ],
   },
 
-  // Environment variables validation
-  env: {
-    NEXT_PUBLIC_BACKEND_API_URL: process.env.NEXT_PUBLIC_BACKEND_API_URL,
-    NEXT_PUBLIC_GOOGLE_CLIENT_ID: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
-    NEXT_PUBLIC_RAZORPAY_KEY_ID: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-  },
-
   // Production optimizations
   poweredByHeader: false,
   

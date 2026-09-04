@@ -10,7 +10,7 @@ export default function Privacy() {
             <main className={styles.main}>
                 <div className={styles.container}>
                     <h1 className={styles.title}>Privacy Policy</h1>
-                    <p className={styles.lastUpdated}>Last updated: January 17, 2026</p>
+                    <p className={styles.lastUpdated}>Last updated: September 5, 2026</p>
 
                     <section className={styles.section}>
                         <h2>1. Introduction</h2>

@@ -25,7 +25,7 @@ const serviceSchema = new mongoose.Schema({
     currency: {
         type: String,
         default: 'INR',
-        enum: ['INR', 'USD'],
+        enum: ['INR'], // INR only — Razorpay payments are denominated in INR
     },
     imageUrl: {
         type: String,

@@ -1,27 +1,51 @@
 const Service = require('../models/Service');
 const User = require('../models/User');
 
-// @desc    Get services within a certain radius
-// @route   GET /api/services?lat=...&lon=...&radius=...
+// @desc    Get services — nearby when lat/lon/radius are given, otherwise all active services
+// @route   GET /api/services?lat=...&lon=...&radius=...   (params optional)
 // @access  Public
 exports.getNearbyServices = async (req, res) => {
     try {
         const { lat, lon, radius } = req.query;
 
+        // Location is optional — when the client has no coordinates (geolocation
+        // denied or unavailable) we return every active service instead of
+        // silently assuming a default location.
         if (!lat || !lon || !radius) {
-            return res.status(400).json({
-                success: false,
-                error: 'Latitude, longitude, and radius are required',
+            const allServices = await Service.find({ isActive: true })
+                .populate({
+                    path: 'provider',
+                    select: 'name verified',
+                })
+                .sort({ createdAt: -1 });
+
+            return res.status(200).json({
+                success: true,
+                count: allServices.length,
+                data: allServices,
             });
         }
-        
+
+        const parsedLat = parseFloat(lat);
+        const parsedLon = parseFloat(lon);
+        const parsedRadius = parseFloat(radius);
+        if (
+            Number.isNaN(parsedLat) || Number.isNaN(parsedLon) || Number.isNaN(parsedRadius)
+            || parsedRadius <= 0
+        ) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid latitude, longitude, or radius',
+            });
+        }
+
         const earthRadius = 6378;
-        const searchRadius = parseFloat(radius) / earthRadius;
+        const searchRadius = parsedRadius / earthRadius;
 
         const nearbyProviders = await User.find({
             location: {
                 $geoWithin: {
-                    $centerSphere: [[parseFloat(lon), parseFloat(lat)], searchRadius],
+                    $centerSphere: [[parsedLon, parsedLat], searchRadius],
                 },
             },
         });
@@ -32,8 +56,9 @@ exports.getNearbyServices = async (req, res) => {
             .populate({
                 path: 'provider',
                 select: 'name verified',
-            });
-            
+            })
+            .sort({ createdAt: -1 });
+
         res.status(200).json({
             success: true,
             count: services.length,

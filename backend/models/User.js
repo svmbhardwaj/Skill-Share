@@ -18,11 +18,6 @@ const userSchema = new mongoose.Schema({
     // Token version for refresh token invalidation
     // Incremented on password change, logout-everywhere, or security events
     tokenVersion: { type: Number, default: 0 },
-    // Phone verification
-    phone: { type: String },
-    phoneVerified: { type: Boolean, default: false },
-    // Identity verification
-    idVerified: { type: Boolean, default: false },
 }, { timestamps: true });
 
 // Index for geospatial queries

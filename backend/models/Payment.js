@@ -43,7 +43,7 @@ const paymentSchema = new mongoose.Schema({
     currency: {
         type: String,
         default: 'INR',
-        enum: ['INR', 'USD', 'EUR'],
+        enum: ['INR'], // INR only — Razorpay payments are INR-denominated
     },
     status: {
         type: String,

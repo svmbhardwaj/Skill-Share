@@ -12,9 +12,9 @@ const razorpay = new Razorpay({
     key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
-// Convert a Job's price to the currency's smallest unit (INR -> paise)
+// Convert a Job's price (INR) to paise — the smallest unit used by Razorpay
 const toSmallestUnit = (amount, currency) => {
-    return Math.round(amount * 100); // paise for INR, cents for USD/EUR
+    return Math.round(amount * 100);
 };
 
 // @desc    Create a Razorpay order for a job

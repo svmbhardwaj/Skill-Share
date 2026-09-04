@@ -56,18 +56,23 @@ export default function BrowseServices() {
     const [error, setError] = useState('');
     const [search, setSearch] = useState('');
     const [category, setCategory] = useState('All');
+    // null = no coordinates (showing all services); set = browsing nearby
     const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
 
-    const fetchServices = async (lat: number, lon: number) => {
+    const fetchServices = async (lat?: number, lon?: number) => {
         setLoading(true);
         setError('');
         try {
             const radius = 20;
+            const query =
+                typeof lat === 'number' && typeof lon === 'number'
+                    ? `?lat=${lat}&lon=${lon}&radius=${radius}`
+                    : '';
             const data = await api.get<{
                 success: boolean;
                 data: Service[];
                 error?: string;
-            }>(`/api/services?lat=${lat}&lon=${lon}&radius=${radius}`, { skipAuth: true });
+            }>(`/api/services${query}`, { skipAuth: true });
 
             if (data.success) {
                 setServices(data.data);
@@ -85,10 +90,9 @@ export default function BrowseServices() {
         }
     };
 
-    useEffect(() => {
-        // Default to Delhi when geolocation is unavailable or denied
-        const defaultLocation = { lat: 28.6139, lon: 77.209 };
-
+    // Ask for the browser's location. If it is unavailable or denied, fall back
+    // to showing ALL services — never a hard-coded default location.
+    const requestLocation = () => {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
@@ -97,14 +101,18 @@ export default function BrowseServices() {
                     fetchServices(loc.lat, loc.lon);
                 },
                 () => {
-                    setUserLocation(defaultLocation);
-                    fetchServices(defaultLocation.lat, defaultLocation.lon);
-                }
+                    fetchServices();
+                },
+                { timeout: 7000, maximumAge: 300000 }
             );
         } else {
-            setUserLocation(defaultLocation);
-            fetchServices(defaultLocation.lat, defaultLocation.lon);
+            fetchServices();
         }
+    };
+
+    useEffect(() => {
+        requestLocation();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const filteredServices = useMemo(() => {
@@ -124,7 +132,10 @@ export default function BrowseServices() {
             <span className={styles.stateIcon} aria-hidden="true">⚠️</span>
             <h2>Couldn&apos;t load services</h2>
             <p>{error}</p>
-            <button className={styles.retryBtn} onClick={() => userLocation && fetchServices(userLocation.lat, userLocation.lon)}>
+            <button
+                className={styles.retryBtn}
+                onClick={() => fetchServices(userLocation?.lat, userLocation?.lon)}
+            >
                 Try Again
             </button>
         </div>
@@ -135,7 +146,7 @@ export default function BrowseServices() {
         return (
             <div className={styles.stateBlock}>
                 <span className={styles.stateIcon} aria-hidden="true">{hasServices ? '🔍' : '📭'}</span>
-                <h2>{hasServices ? 'No matching services' : 'No services nearby yet'}</h2>
+                <h2>{hasServices ? 'No matching services' : 'No services yet'}</h2>
                 <p>
                     {hasServices
                         ? 'Try a different search term or category.'
@@ -164,6 +175,17 @@ export default function BrowseServices() {
                         <p className={styles.subtitle}>
                             Real people offering real help in your community.
                         </p>
+
+                        {userLocation === null && !loading && !error && (
+                            <div className={styles.locationNote} role="status">
+                                <span className={styles.locationNoteText}>
+                                    Showing all services. Allow location access to see results near you first.
+                                </span>
+                                <button className={styles.useLocationBtn} onClick={requestLocation}>
+                                    Use my location
+                                </button>
+                            </div>
+                        )}
 
                         {/* Search */}
                         <div className={styles.searchBar} role="search">
